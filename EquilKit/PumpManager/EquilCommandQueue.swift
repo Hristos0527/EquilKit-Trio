@@ -63,7 +63,7 @@ public final class EquilCommandQueue {
     /// During connect-timeout wait runner.abort() is no-op — call this from cancelPriming.
     private var activeConnectCancel: (() -> Void)?
 
-    // MARK: - FILL-LOOP CANCEL (priming Stop gomb / deactivate force-takeover)
+    // MARK: - FILL-LOOP CANCEL (priming Stop button / deactivate force-takeover)
 
     /// true while auto fill-loop (priming) runs. `cancelPriming()` checks if there is
     /// anything to abort and whether running command abort is needed.
@@ -822,7 +822,7 @@ public final class EquilCommandQueue {
             }
         }
 
-        // Connect-per-command: minden parancs teljes connect → flush → parancs → disconnect ciklus.
+        // Connect-per-command: every command is a full connect → flush → command → disconnect cycle.
         EquilBaseCmd.resetState()
         configureScanFilter()
         // Diagnostic scan (pairing list) must not block command connect.

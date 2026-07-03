@@ -78,7 +78,7 @@ public final class EquilBLEManager: NSObject {
     /// One raw notification frame (16-byte or shorter last packet) from the pump.
     var onNotify: ((Data) -> Void)?
 
-    /// NOTIFY-FLUSH ABLAK: a connect-per-command miatt minden parancs friss
+    /// NOTIFY-FLUSH WINDOW: with connect-per-command, every command uses a fresh
     /// connection. However PREVIOUS command's last notify frames can leak from pump
     /// buffer into NEW connection "notifications enabled -> ready"
     /// event AFTER, appearing at new command's first decode → ct.len=0B
@@ -521,7 +521,7 @@ public extension EquilBLEManager {
     /// Immediate reconnect to held peripheral (no timeout — iOS range watch).
     func reconnectNow() {
         guard central.state == .poweredOn else {
-            log("watchdog: BT nincs poweredOn (\(central.state.rawValue)) — kihagyva")
+            log("watchdog: BT not poweredOn (\(central.state.rawValue)) — skipped")
             return
         }
         guard let p = peripheral else {
@@ -530,7 +530,7 @@ public extension EquilBLEManager {
                 log("watchdog: peripheral retrieved, reconnect…")
                 if let pp = peripheral { central.connect(pp, options: nil) }
             } else {
-                log("watchdog: nincs megtartott peripheral — reconnect kihagyva")
+                log("watchdog: no retained peripheral — reconnect skipped")
             }
             return
         }
@@ -564,7 +564,7 @@ public extension EquilBLEManager {
     func resumeWatchdog() {
         guard watchdogEnabled else { return }
         watchdogPaused = false
-        log("watchdog: FOLYTATVA")
+        log("watchdog: RESUMED")
     }
 
     /// Build fresh connection to held peripheral WITHOUT scan (AAPS connectEquil).
@@ -572,7 +572,7 @@ public extension EquilBLEManager {
     /// If peripheral lost (app-restart), retrieve by ID.
     func connectForCommand() {
         guard central.state == .poweredOn else {
-            log("connectForCommand: BT nincs poweredOn (\(central.state.rawValue))")
+            log("connectForCommand: BT not poweredOn (\(central.state.rawValue))")
             return
         }
         // Clean start: disconnect all prior connections so pump gets fresh

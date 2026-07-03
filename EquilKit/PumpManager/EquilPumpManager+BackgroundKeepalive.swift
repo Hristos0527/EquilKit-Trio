@@ -58,7 +58,7 @@ extension EquilPumpManager {
         return true
     }
 
-    /// Lightweight BLE ping (CmdRunningModeGet) — connect-per-command, nincs dosing opcode.
+    /// Lightweight BLE ping (CmdRunningModeGet) — connect-per-command, no dosing opcode.
     func performBackgroundKeepalivePing(completion: ((Bool) -> Void)? = nil) {
         guard backgroundKeepaliveShouldRun else {
             completion?(false)

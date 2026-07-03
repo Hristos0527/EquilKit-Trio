@@ -16,9 +16,9 @@ enum EquilFraming {
         Int(ceil(value))
     }
 
-    /// BaseCmd.responseCmd byte-azonos portja.
-    /// - port: pl. "0F0F0000" (DEFAULT_PORT + "0000") vagy "0D0D0000" (pair)
-    /// - tag/iv/ciphertext: az AESUtil.aesEncrypt hex kimenete
+    /// Byte-identical port of BaseCmd.responseCmd.
+    /// - port: e.g. "0F0F0000" (DEFAULT_PORT + "0000") or "0D0D0000" (pair)
+    /// - tag/iv/ciphertext: hex output from AESUtil.aesEncrypt
     /// - reqIndex: current BaseCmd.reqIndex value
     /// Returns: list of BLE packets ([[UInt8]]).
     static func responseCmd(

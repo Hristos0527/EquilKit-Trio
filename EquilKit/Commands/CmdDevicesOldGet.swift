@@ -28,7 +28,7 @@ final class CmdDevicesOldGet: EquilBaseSetting {
     override var commandLabel: String { "Device query (CmdDevicesOldGet)" }
     override func makeFirstResponse() throws -> EquilResponse { try getEquilResponse() }
 
-    // MARK: - getFirstData / getNextData (nyers byte-ok)
+    // MARK: - getFirstData / getNextData (raw bytes)
 
     override func getFirstData() -> [UInt8]? {
         let indexByte = EquilUtils.intToBytes(EquilBaseCmd.pumpReqIndex)

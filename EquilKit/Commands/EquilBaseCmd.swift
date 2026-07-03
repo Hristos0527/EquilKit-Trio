@@ -93,10 +93,10 @@ public class EquilBaseCmd {
         return true
     }
 
-    // MARK: - responseCmd (BaseCmd.responseCmd) — a kritikus BLE framing
+    // MARK: - responseCmd (BaseCmd.responseCmd) — critical BLE framing
 
-    /// Becsomagolja az EquilCmdModel-t (tag|iv|ciphertext) BLE csomagokba,
-    /// majd reqIndex++.
+    /// Packs EquilCmdModel (tag|iv|ciphertext) into BLE packets,
+    /// then reqIndex++.
     func responseCmd(_ model: EquilCmdModel, port: String) -> EquilResponse {
         let packets = EquilFraming.responseCmd(
             port: port,

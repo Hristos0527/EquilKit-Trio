@@ -905,7 +905,7 @@ public extension EquilPumpManager {
     /// On suspend / zero-temp entry: save current alarm mode, then switch to MUTE
     /// so patch doesn't vibrate/beep while stopped. ONLY for transitions: if already mute,
     /// or saved value exists (race guard), do NOT resend — so not every
-    /// loop ciklusban megy mute.
+    /// loop cycle sends mute.
     private func applyTransientMuteForSuspend() {
         guard !state.deviceToken.isEmpty else { return }
         // Save already exists (temporary mute active) → don't overwrite, don't resend.
