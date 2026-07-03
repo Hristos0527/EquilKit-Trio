@@ -8,13 +8,13 @@ class PatchPrimingViewModel: ObservableObject {
     @Published var primingError = ""
     @Published var is300u = false
 
-    /// A flow első valódi indításától igaz (ViewModel szintű latch; a pumpManager
-    /// `isPrimingFlowLatched` flagje túléli a VC újraépítést is).
+    /// true from first real flow start (ViewModel-level latch; pumpManager
+    /// `isPrimingFlowLatched` survives VC rebuild too).
     private var isInPrimingFlow = false
-    /// Egyszeri belépéskori ellenőrzés: ha a pumpa már primed, továbbléphetünk — de NEM minden
-    /// heartbeat/sync frissítésnél (az okozta az idő előtti elnavigálást priming közben).
+    /// One-time entry check: if pump already primed, can advance — but NOT on every
+    /// heartbeat/sync update (that caused early navigation during priming).
     private var didCheckAlreadyPrimedOnEntry = false
-    /// Egyszeri navigáció a sikeres priming után (completion + observer backup).
+    /// One-time navigation after successful priming (completion + observer backup).
     private var didFinishPrimingNavigation = false
 
     private let nextStep: () -> Void
@@ -48,8 +48,8 @@ class PatchPrimingViewModel: ObservableObject {
         pumpManager?.removeStatusObserver(self)
     }
 
-    /// VC/ViewModel újraépítés után (pl. resetNavigationTo) visszaállítja a priming UI-t, ha a
-    /// fill-loop vagy a pumpManager latch még aktív.
+    /// After VC/ViewModel rebuild (e.g. resetNavigationTo) restore priming UI if
+    /// fill-loop or pumpManager latch still active.
     func handleAppear() {
         guard let pumpManager else { return }
         restorePrimingUIState(from: pumpManager)
@@ -116,24 +116,24 @@ class PatchPrimingViewModel: ObservableObject {
                         self.isPriming = false
                         return
                     }
-                    // A fill-loop sikeresen lefutott — a pumpState frissítése a primePatch-ben
-                    // akár 1,5 s késleltetéssel érkezik; a finishPrimingIfReady addig vár/retry-el.
+                    // Fill-loop completed — pumpState update in primePatch
+                    // may arrive up to 1.5s late; finishPrimingIfReady waits/retries until then.
                     self.finishPrimingIfReady(from: pumpManager)
                 }
             }
         #endif
     }
 
-    /// Sikeres priming után navigál a következő lépésre / dashboardra. A fill-loop vége és a
-    /// `pumpState = .primed` beállítása között lehet rövid késleltetés (primePatch 1,5 s settle).
+    /// After successful priming navigate to next step / dashboard. Between fill-loop end and
+    /// `pumpState = .primed` there may be short delay (primePatch 1.5s settle).
     private func finishPrimingIfReady(from pumpManager: EquilPumpManager, attempt: Int = 0) {
         guard !didFinishPrimingNavigation else { return }
         guard isInPrimingFlow else { return }
         guard !pumpManager.isPrimingActive else { return }
 
-        // Aktív priming flow alatt CSAK a tényleges pumpState primed jelenti a kész állapotot.
-        // A régi activationProgress (> priming) idő előtti elnavigálást okozott induláskor,
-        // mielőtt a fill-loop elindult volna (notifyStateDidChange → observer race).
+        // During active priming flow ONLY actual pumpState primed means complete.
+        // Old activationProgress (> priming) caused early navigation on start,
+        // before fill-loop started (notifyStateDidChange → observer race).
         let primingDone = pumpManager.state.pumpState.rawValue >= PatchState.primed.rawValue
 
         if primingDone {
@@ -149,7 +149,7 @@ class PatchPrimingViewModel: ObservableObject {
             return
         }
 
-        // primePatch asyncAfter settle: max ~3 s várakozás, aztán hibaüzenet.
+        // primePatch asyncAfter settle: max ~3s wait, then error message.
         guard attempt < 6 else {
             isPriming = false
             primingError = String(
@@ -194,10 +194,10 @@ extension PatchPrimingViewModel: PumpManagerStatusObserver {
             DispatchQueue.main.async {
                 self.primeProgress = Double(pumpManager.state.primeProgress) / 240
 
-                // Fill-loop alatt csak progress — navigáció TILOS (heartbeat/sync ne lökje ki).
+                // During fill-loop only progress — navigation FORBIDDEN (heartbeat/sync must not kick out).
                 guard !pumpManager.isPrimingActive else { return }
-                // Ha a loop már leállt és a pumpState primed-re vált, itt is navigálunk
-                // (backup a completion handler mellé).
+                // If loop stopped and pumpState became primed, navigate here too
+                // (backup alongside completion handler).
                 self.finishPrimingIfReady(from: pumpManager)
             }
         #endif

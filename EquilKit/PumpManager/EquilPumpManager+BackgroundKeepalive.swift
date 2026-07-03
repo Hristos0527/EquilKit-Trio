@@ -4,7 +4,7 @@ import UIKit
 // MARK: - Background keepalive (Build #53)
 
 extension EquilPumpManager {
-    /// 60–90 mp közötti jitteres intervallum — a pumpa ~2–3 perc után riaszt „no connection” miatt.
+    /// 60–90 s jittered interval — pump alarms "no connection" after ~2–3 minutes.
     static let backgroundKeepaliveMinInterval: TimeInterval = 60
     static let backgroundKeepaliveMaxInterval: TimeInterval = 90
 
@@ -31,7 +31,7 @@ extension EquilPumpManager {
     @objc private func equilAppDidEnterBackground() {
         appIsInBackground = true
         EquilLogBuffer.shared.append(
-            "Equil BG keepalive: háttér — időzítő indul",
+            "Equil BG keepalive: background — timer started",
             category: "EquilPumpManager",
             level: .info
         )
@@ -42,13 +42,13 @@ extension EquilPumpManager {
         appIsInBackground = false
         stopBackgroundKeepaliveTimer()
         EquilLogBuffer.shared.append(
-            "Equil BG keepalive: előtér — időzítő leáll",
+            "Equil BG keepalive: foreground — timer stopped",
             category: "EquilPumpManager",
             level: .info
         )
     }
 
-    /// Feltételek: párosítva, priming kész, nem szándékos suspend, nincs aktív bólusz/priming fill.
+    /// Conditions: paired, priming complete, not intentional suspend, no active bolus/priming fill.
     var backgroundKeepaliveShouldRun: Bool {
         guard state.isOnboarded, !state.deviceToken.isEmpty else { return false }
         guard isPrimingComplete else { return false }

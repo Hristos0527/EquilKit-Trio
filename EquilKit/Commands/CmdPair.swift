@@ -4,12 +4,12 @@ import Foundation
 final class CmdPair: EquilBaseCmd {
     static let ERROR_PWD = String(repeating: "0", count: 64)
 
-    let pairPassword: String // a felhasználó által megadott jelszó (pl. "0000")
-    let address: String // BLE MAC cím (AAPS CmdPair 2. paramétere)
+    let pairPassword: String // user-provided password (e.g. "0000")
+    let address: String // BLE MAC address (AAPS CmdPair 2nd parameter)
     var sn: String
     var randomPassword: [UInt8]?
 
-    /// Az újonnan kialkudott device/password — a hívó ezt menti el a sikeres pároláskor.
+    /// Newly negotiated device/password — caller saves on successful pairing.
     var newDevice: String?
     var newPassword: String?
 
@@ -23,17 +23,17 @@ final class CmdPair: EquilBaseCmd {
         self.address = address
         var s = name.replacingOccurrences(of: "Equil - ", with: "")
         s = s.trimmingCharacters(in: .whitespaces)
-        // convertString: minden karakter elé "0"
+        // convertString: prepend "0" before every character
         var conv = ""
         for ch in s { conv += "0"
             conv.append(ch) }
         sn = conv
-        // a párosításnál még nincs tárolt device/password
+        // no stored device/password yet during pairing
         super.init(createTime: createTime, equilDevice: "", equilPassword: "")
         port = "0E0E"
     }
 
-    // MARK: - 1. üzenet: getEquilResponse
+    // MARK: - 1st message: getEquilResponse
 
     func getEquilResponse() throws -> EquilResponse {
         response = EquilResponse(createTime: createTime)
@@ -52,12 +52,12 @@ final class CmdPair: EquilBaseCmd {
 
     func getNextEquilResponse() throws -> EquilResponse { try getEquilResponse() }
 
-    // MARK: - EquilCommandDriving felülírás
+    // MARK: - EquilCommandDriving override
 
     override var commandLabel: String { "Pairing (CmdPair)" }
     override func makeFirstResponse() throws -> EquilResponse { try getEquilResponse() }
 
-    // MARK: - 2. üzenet: decode
+    // MARK: - 2nd message: decode
 
     func decode() throws -> EquilResponse? {
         let model = decodeModel()
@@ -66,7 +66,7 @@ final class CmdPair: EquilBaseCmd {
         let pwd1 = String(content.prefix(64)) // device
         let pwd2 = String(content.dropFirst(64)) // password
         if CmdPair.ERROR_PWD == pwd1, CmdPair.ERROR_PWD == pwd2 {
-            // AAPS: cmdSuccess=true, enacted=false — a pump hibát/elutasítást jelez
+            // AAPS: cmdSuccess=true, enacted=false — pump signals error/rejection
             cmdSuccess = true
             enacted = false
             return nil
@@ -81,14 +81,14 @@ final class CmdPair: EquilBaseCmd {
         return responseCmd(model2, port: port + (runCode ?? ""))
     }
 
-    // MARK: - 3. üzenet: decodeConfirm
+    // MARK: - 3rd message: decodeConfirm
 
     func decodeConfirm() -> EquilResponse? {
         cmdSuccess = true
         return nil
     }
 
-    // MARK: - Beérkező állapotgép bekötése (EquilBaseCmd.decodeEquilPacket hívja)
+    // MARK: - Wire incoming state machine (called by EquilBaseCmd.decodeEquilPacket)
 
     override func decodeStep() -> EquilResponse? {
         do { return try decode() }

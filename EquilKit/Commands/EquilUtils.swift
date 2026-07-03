@@ -1,7 +1,7 @@
 import Foundation
 
 enum EquilUtils {
-    /// Utils.generateRandomPassword — kriptográfiailag biztonságos véletlen byte-ok.
+    /// Utils.generateRandomPassword — cryptographically secure random bytes.
     static func generateRandomPassword(_ length: Int) -> [UInt8] {
         var bytes = [UInt8](repeating: 0, count: length)
         _ = SecRandomCopyBytes(kSecRandomDefault, length, &bytes)
@@ -45,12 +45,12 @@ enum EquilUtils {
         return value
     }
 
-    /// Utils.decodeSpeedToUH(Double) -> Int — bazál sebesség lépésekre.
-    /// AAPS: BigDecimal(i) / 0.00625 (RoundingMode lefelé, mert toInt csonkol).
+    /// Utils.decodeSpeedToUH(Double) -> Int — basal rate to steps.
+    /// AAPS: BigDecimal(i) / 0.00625 (RoundingMode down, because toInt truncates).
     static func decodeSpeedToUH(_ i: Double) -> Int {
-        // AAPS: BigDecimal(i).divide(0.00625).toInt()  →  CSONKÍTÁS nulla felé.
-        // 0.00625 = 1/160, így i/0.00625 = i*160. A BigDecimal.toInt() TRUNCAL
-        // (nem kerekít), ezért itt is csonkítunk (RoundingMode.DOWN / toward zero).
+        // AAPS: BigDecimal(i).divide(0.00625).toInt()  →  TRUNCATE toward zero.
+        // 0.00625 = 1/160, so i/0.00625 = i*160. BigDecimal.toInt() TRUNCATES
+        // (does not round), so we truncate here too (RoundingMode.DOWN / toward zero).
         var exact = (Decimal(i) / Decimal(string: "0.00625")!)
         var truncated = Decimal()
         NSDecimalRound(&truncated, &exact, 0, .down)
@@ -69,7 +69,7 @@ enum EquilUtils {
         return [UInt8(value & 0xFF), UInt8((value >> 8) & 0xFF)]
     }
 
-    /// Utils.hexStringToBytes — kisbetűt is kezel (uppercase-eli).
+    /// Utils.hexStringToBytes — handles lowercase (uppercases).
     static func hexStringToBytes(_ hex: String) -> [UInt8] {
         let hexString = hex.uppercased()
         let chars = Array(hexString)
@@ -88,7 +88,7 @@ enum EquilUtils {
         return d
     }
 
-    /// Utils.concat — bytearray-ek összefűzése.
+    /// Utils.concat — concatenate byte arrays.
     static func concat(_ arrays: [UInt8]...) -> [UInt8] {
         var result: [UInt8] = []
         for a in arrays { result.append(contentsOf: a) }
@@ -113,7 +113,7 @@ enum EquilUtils {
 }
 
 private extension String {
-    /// Egy karakter indexe a stringben (a charToByte LUT-hoz).
+    /// Index of a character in the string (for charToByte LUT).
     func distance(of character: Character) -> Int? {
         guard let idx = firstIndex(of: character) else { return nil }
         return distance(from: startIndex, to: idx)

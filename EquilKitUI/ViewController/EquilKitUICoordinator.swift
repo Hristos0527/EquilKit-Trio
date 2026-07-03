@@ -242,23 +242,23 @@ private final class EquilOnboardingStepViewController: UIViewController {
     private func configureChrome() {
         switch screen {
         case .assemble:
-            title = "Patch összeszerelés"
-            statusLabel.text = "Szereld össze a patch-et a pump testtel az útmutató szerint."
+            title = "Assemble patch"
+            statusLabel.text = "Assemble the patch with the pump body per the guide."
         case .pair:
-            title = "Párosítás"
-            statusLabel.text = "Add meg a sorozatszámot (6 hex) és a jelszót (4 hex)."
+            title = "Pairing"
+            statusLabel.text = "Enter serial number (6 hex) and password (4 hex)."
         case .fill:
-            title = "Feltöltés"
-            statusLabel.text = "Töltsd fel az inzulinnal. Automatikus feltöltés a dugattyú érzékeléséig."
+            title = "Fill"
+            statusLabel.text = "Fill with insulin. Auto-fill until plunger is detected."
         case .attach:
-            title = "Felhelyezés"
-            statusLabel.text = "Távolítsd el a védőfóliát, és illeszd a testre."
+            title = "Apply"
+            statusLabel.text = "Remove protective film and apply to body."
         case .air:
-            title = "Levegőztetés"
-            statusLabel.text = "Távolítsd el a levegőt a kanül előtt."
+            title = "Prime"
+            statusLabel.text = "Remove air before the cannula."
         case .confirm:
-            title = "Megerősítés"
-            statusLabel.text = "Indítsd el a patch-et és fejezd be a beállítást."
+            title = "Confirm"
+            statusLabel.text = "Start the patch and finish setup."
         }
 
         statusLabel.numberOfLines = 0
@@ -281,8 +281,8 @@ private final class EquilOnboardingStepViewController: UIViewController {
             field.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(field)
         }
-        serialField.placeholder = "Sorozatszám (6 hex)"
-        passwordField.placeholder = "Jelszó (4 hex)"
+        serialField.placeholder = "Serial number (6 hex)"
+        passwordField.placeholder = "Password (4 hex)"
         NSLayoutConstraint.activate([
             serialField.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
             serialField.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
@@ -303,24 +303,24 @@ private final class EquilOnboardingStepViewController: UIViewController {
         case .assemble,
              .attach:
             actionButton.isHidden = true
-            nextButton.setTitle("Tovább", for: .normal)
+            nextButton.setTitle("Next", for: .normal)
             nextButton.addTarget(self, action: #selector(advanceTapped), for: .touchUpInside)
         case .pair:
-            actionButton.setTitle("Párosítás", for: .normal)
+            actionButton.setTitle("Pair", for: .normal)
             actionButton.addTarget(self, action: #selector(pairTapped), for: .touchUpInside)
             nextButton.isHidden = true
         case .fill:
-            actionButton.setTitle("Automatikus feltöltés", for: .normal)
+            actionButton.setTitle("Auto fill", for: .normal)
             actionButton.addTarget(self, action: #selector(fillTapped), for: .touchUpInside)
-            nextButton.setTitle("Tovább", for: .normal)
+            nextButton.setTitle("Next", for: .normal)
             nextButton.addTarget(self, action: #selector(advanceTapped), for: .touchUpInside)
         case .air:
-            actionButton.setTitle("Levegő eltávolítása", for: .normal)
+            actionButton.setTitle("Remove air", for: .normal)
             actionButton.addTarget(self, action: #selector(airTapped), for: .touchUpInside)
-            nextButton.setTitle("Tovább", for: .normal)
+            nextButton.setTitle("Next", for: .normal)
             nextButton.addTarget(self, action: #selector(advanceTapped), for: .touchUpInside)
         case .confirm:
-            actionButton.setTitle("Patch aktiválása", for: .normal)
+            actionButton.setTitle("Activate patch", for: .normal)
             actionButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
             nextButton.isHidden = true
         }
@@ -342,7 +342,7 @@ private final class EquilOnboardingStepViewController: UIViewController {
         onPair(serialField.text ?? "", passwordField.text ?? "") { success, message in
             DispatchQueue.main.async {
                 self.setBusy(false)
-                self.statusLabel.text = success ? "Párosítás sikeres." : (message ?? "Párosítás sikertelen.")
+                self.statusLabel.text = success ? "Pairing successful." : (message ?? "Pairing failed.")
                 if success { self.onAdvance() }
             }
         }
@@ -353,7 +353,7 @@ private final class EquilOnboardingStepViewController: UIViewController {
         onFill(true) { success, message in
             DispatchQueue.main.async {
                 self.setBusy(false)
-                self.statusLabel.text = message ?? (success ? "Feltöltés kész." : "Feltöltés sikertelen.")
+                self.statusLabel.text = message ?? (success ? "Fill complete." : "Fill failed.")
             }
         }
     }
@@ -363,7 +363,7 @@ private final class EquilOnboardingStepViewController: UIViewController {
         onAir { success, message in
             DispatchQueue.main.async {
                 self.setBusy(false)
-                self.statusLabel.text = success ? "Levegőztetés kész." : (message ?? "Hiba")
+                self.statusLabel.text = success ? "Priming complete." : (message ?? "Error")
             }
         }
     }
@@ -373,7 +373,7 @@ private final class EquilOnboardingStepViewController: UIViewController {
         onConfirm { success, message in
             DispatchQueue.main.async {
                 self.setBusy(false)
-                self.statusLabel.text = success ? "Kész." : (message ?? "Aktiválás sikertelen.")
+                self.statusLabel.text = success ? "Done." : (message ?? "Activation failed.")
             }
         }
     }

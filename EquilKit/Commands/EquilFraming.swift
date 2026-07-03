@@ -1,17 +1,17 @@
 import Foundation
 
 enum EquilFraming {
-    /// reqIndex bit7 = 0 (folytatódó csomag).  BaseCmd.toNewStart
+    /// reqIndex bit7 = 0 (continuation packet).  BaseCmd.toNewStart
     static func toNewStart(_ number: UInt8) -> UInt8 {
         number & ~(1 << 7)
     }
 
-    /// reqIndex bit7 = 1 (záró csomag).  BaseCmd.toNewEndConf
+    /// reqIndex bit7 = 1 (final packet).  BaseCmd.toNewEndConf
     static func toNewEndConf(_ number: UInt8) -> UInt8 {
         number | (1 << 7)
     }
 
-    /// BaseCmd.up1 — felfelé kerekítés (RoundingMode.UP).
+    /// BaseCmd.up1 — round up (RoundingMode.UP).
     static func up1(_ value: Double) -> Int {
         Int(ceil(value))
     }
@@ -19,8 +19,8 @@ enum EquilFraming {
     /// BaseCmd.responseCmd byte-azonos portja.
     /// - port: pl. "0F0F0000" (DEFAULT_PORT + "0000") vagy "0D0D0000" (pair)
     /// - tag/iv/ciphertext: az AESUtil.aesEncrypt hex kimenete
-    /// - reqIndex: a BaseCmd.reqIndex aktuális értéke
-    /// Visszaad: BLE csomagok listája ([[UInt8]]).
+    /// - reqIndex: current BaseCmd.reqIndex value
+    /// Returns: list of BLE packets ([[UInt8]]).
     static func responseCmd(
         port: String,
         tag: String,
@@ -34,8 +34,8 @@ enum EquilFraming {
 
         let n = allByte.count
         let index = ((n - 8) % 10 == 0) ? 1 : 2
-        // KRITIKUS: a Kotlin forrásban ((allByte.size - 8) / 10) EGÉSZ osztás (Int/Int),
-        // és csak UTÁNA .toDouble(). NEM lebegőpontos osztás!
+        // CRITICAL: in Kotlin source ((allByte.size - 8) / 10) is INTEGER division (Int/Int),
+        // and only THEN .toDouble(). NOT floating-point division!
         // up1((( n - 8 ) / 10).toDouble()) + index
         let maxLen = up1(Double((n - 8) / 10)) + index
 
@@ -56,7 +56,7 @@ enum EquilFraming {
                 buffer.append(UInt8((10 * i) & 0xFF))
                 buffer.append(toNewStart(UInt8(reqIndex & 0xFF)))
             }
-            // crc8Maxim az első 5 byte-ra
+            // crc8Maxim on first 5 bytes
             let crcArray = Array(buffer[0 ..< 5])
             buffer.append(UInt8(Crc.crc8Maxim(crcArray) & 0xFF))
 
@@ -64,10 +64,10 @@ enum EquilFraming {
                 // 4 payload byte
                 for _ in 0 ..< 4 { buffer.append(allByte[byteIndex])
                     byteIndex += 1 }
-                // 16-bites payload CRC FORDÍTVA: low (crc1[1]) majd high (crc1[0])
+                // 16-bit payload CRC REVERSED: low (crc1[1]) then high (crc1[0])
                 buffer.append(crc1[1])
                 buffer.append(crc1[0])
-                // további 4 payload byte
+                // next 4 payload bytes
                 for _ in 0 ..< 4 { buffer.append(allByte[byteIndex])
                     byteIndex += 1 }
             } else {

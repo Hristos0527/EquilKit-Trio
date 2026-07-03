@@ -153,9 +153,9 @@ enum StateSyncer {
         state: EquilPumpState,
         pumpManager: EquilPumpManager
     ) {
-        // Priming közben a heartbeat/sync NEM írja felül a UI pumpState-et — különben a
-        // pillanatnyi eszköz-állapot (pl. primed/ejecting) idő előtt elnavigálna, miközben a
-        // fill-loop még fut. A primeProgress továbbra is frissül a sync() hívóban.
+        // During priming, heartbeat/sync does NOT overwrite UI pumpState — otherwise
+        // transient device state (e.g. primed/ejecting) would navigate away early while
+        // fill-loop still runs. primeProgress still updates in sync() caller.
         if !pumpManager.isPrimingActive, !pumpManager.isPrimingFlowLatched {
             state.pumpState = syncResponse.state
         }

@@ -35,9 +35,9 @@ public final class EquilPumpManager: DeviceManager {
     public let commandQueue: EquilCommandQueue
     private var bolusCompletionWorkItem: DispatchWorkItem?
 
-    /// A felhasználó priming-flow-ja (Start priming után) a ViewModel/VC életciklusa felett is
-    /// érvényes marad. Megakadályozza, hogy heartbeat/dashboard-sync felülírja a `pumpState`-et
-    /// és az observer idő előtt elnavigáljon, miközben a fill-loop még fut.
+    /// User priming flow (after Start priming) remains valid beyond ViewModel/VC lifecycle.
+    /// Prevents heartbeat/dashboard-sync from overwriting `pumpState`
+    /// and observer navigating away early while fill-loop still runs.
     private let primingFlowLatchLock = NSLock()
     private var primingFlowLatched = false
     /// Throttle battery-only CmdHistoryGet when full sync is gated by `lastSync`.
@@ -127,13 +127,13 @@ public final class EquilPumpManager: DeviceManager {
         warmUpBLEPeripheralReference()
     }
 
-    /// Scan nélküli connectForCommand: a bondolt peripheral UUID-ját visszatöltjük app-indítás után.
+    /// Scan-less connectForCommand: reload bonded peripheral UUID after app launch.
     func warmUpBLEPeripheralReference() {
         guard let uuidString = state.peripheralUUID, let id = UUID(uuidString: uuidString) else { return }
         _ = commandQueue.bleManager.retrieveAndHold(identifier: id)
     }
 
-    /// Sikeres BLE-kapcsolat után perzisztáljuk a peripheral UUID-t (scan-fallback elkerülése).
+    /// After successful BLE connection persist peripheral UUID (avoid scan fallback).
     func persistPairedPeripheralUUIDIfNeeded() {
         guard let uuid = commandQueue.bleManager.currentPeripheral?.identifier.uuidString else { return }
         guard state.peripheralUUID != uuid else { return }
@@ -258,7 +258,7 @@ public extension EquilPumpManager {
         PumpManagerStatus(
             timeZone: TimeZone.current,
             device: device(state),
-            // state.battery MÁR százalék (0–100, CmdHistoryGet / sync) → 0–1 arány, NEM feszültség-képlet.
+            // state.battery is ALREADY percent (0–100, CmdHistoryGet / sync) → 0–1 fraction, NOT voltage formula.
             pumpBatteryChargeRemaining: state.patchBatteryFraction,
             basalDeliveryState: state.basalDeliveryState,
             bolusState: bolusState(currentBolusState),
@@ -274,8 +274,8 @@ public extension EquilPumpManager {
 
         let fullSyncStale = Date.now.timeIntervalSince(state.lastSync) > .minutes(5)
         guard fullSyncStale else {
-            // Priming/dosing frissíti a lastSync-et anélkül, hogy CmdHistoryGet lefutna —
-            // ilyenkor külön húzzuk be az akkut, ne maradjon 0 a HUD-on.
+            // Priming/dosing updates lastSync without CmdHistoryGet —
+            // fetch battery separately so HUD doesn't stay at 0.
             fetchHistoryBatteryIfNeeded(completion: completion)
             return
         }
@@ -284,11 +284,11 @@ public extension EquilPumpManager {
         var capturedMode: CmdRunningModeGet?
         var capturedHistory: CmdHistoryGet?
 
-        // AKKU-KÍMÉLÉS: a CmdTimeSet NEM fut minden syncnél (az AAPS sem küldi
-        // ciklusonként). Csak akkor toldjuk a sorba, ha tényleg szükséges:
-        //   - még sosem állítottuk be (párosítás utáni első sync), VAGY
-        //   - változott a GMT-eltolás (időzóna-/DST-váltás), VAGY
-        //   - több mint 24 óra telt el az utolsó beállítás óta (lassú óradrift).
+        // BATTERY SAVING: CmdTimeSet does NOT run every sync (AAPS doesn't either
+        // each cycle). Only queue when actually needed:
+        //   - never set yet (first sync after pairing), OR
+        //   - GMT offset changed (timezone/DST change), OR
+        //   - more than 24 hours since last set (slow clock drift).
         let currentGMTOffset = TimeZone.current.secondsFromGMT(for: Date())
         let shouldSyncTime: Bool = {
             guard let lastAt = state.lastTimeSetAt else { return true }
@@ -367,7 +367,7 @@ public extension EquilPumpManager {
         }
     }
 
-    /// CmdHistoryGet csak az akku % miatt — nem frissíti a `lastSync`-et (ne blokkolja a 5 perces full sync gate-et).
+    /// CmdHistoryGet for battery % only — does not update `lastSync` (don't block 5-minute full sync gate).
     private func fetchHistoryBatteryIfNeeded(completion: ((Date?) -> Void)?) {
         guard state.battery == 0 else {
             completion?(nil)
@@ -417,8 +417,8 @@ public extension EquilPumpManager {
         .communication(EquilCommunicationError.commandFailed(result.errorMessage ?? "Communication failed"))
     }
 
-    /// Loop enact előtt: teljes sync ha stale (>5 perc), majd mindig egy élő BLE ping
-    /// (connect-per-command mellett a friss lastSync önmagában nem garantál elérhető pumpát).
+    /// Before loop enact: full sync if stale (>5 min), then always live BLE ping
+    /// (with connect-per-command fresh lastSync alone doesn't guarantee reachable pump).
     func prepareForLoopCycle(completion: @escaping (Bool) -> Void) {
         ensureCurrentPumpData { [weak self] _ in
             guard let self else {
@@ -429,7 +429,7 @@ public extension EquilPumpManager {
         }
     }
 
-    /// Egy CmdRunningModeGet BLE round-trip a loop előtt; executeWithRetry kezeli a connection timeout-ot.
+    /// One CmdRunningModeGet BLE round-trip before loop; executeWithRetry handles connection timeout.
     func pingPumpReachability(completion: @escaping (Bool) -> Void) {
         guard state.isOnboarded, !state.deviceToken.isEmpty else {
             completion(false)
@@ -458,7 +458,7 @@ public extension EquilPumpManager {
         }
     }
 
-    /// Bolus/temp/loop ping: a queue executeCmdWithRetry-je (max 3 próba, bontás+index reset backoff).
+    /// Bolus/temp/loop ping: queue executeCmdWithRetry (max 3 attempts, disconnect+index reset backoff).
     private func executeWithRetry(
         _ makeCommand: @escaping () -> EquilCommandDriving,
         options: EquilCommandQueue.CommandOptions = .default,
@@ -472,15 +472,15 @@ public extension EquilPumpManager {
         }
     }
 
-    /// A priming sikeres befejezése. RUN-mód / dosing / loop-enact CSAK ekkor engedélyezett.
+    /// Successful priming completion. RUN mode / dosing / loop-enact ONLY allowed then.
     ///
-    /// Párosítás után, amíg a prime nincs sikeresen lefuttatva, a pumpa NEM mehet RUN/active
-    /// delivery módba (nehogy prime előtt loopoljon/adagoljon). A "prime kész" jelet két,
-    /// egymást kiegészítő állapotból olvassuk ki (bármelyik elég):
-    ///   - `pumpState >= .primed` (primePatch sikere ezt állítja be), VAGY
-    ///   - `activationProgress` már a priming-fázison TÚL van (az onboarding fill-lépés
-    ///     sikere `.cannulaChange`-re lép → a későbbi activation RUN-ja engedélyezett).
-    /// Aktiváláskor (activatePatch) a pumpState ekkor már .primed, így a gate átengedi.
+    /// After pairing, until prime succeeds, pump must NOT enter RUN/active
+    /// delivery mode (avoid looping/dosing before prime). "prime complete" signal from two
+    /// complementary states (either suffices):
+    ///   - `pumpState >= .primed` (primePatch success sets this), OR
+    ///   - `activationProgress` past priming phase (onboarding fill step
+    ///     success advances to `.cannulaChange` → later activation RUN allowed).
+    /// On activation (activatePatch) pumpState is already .primed, so gate allows.
     var isPrimingComplete: Bool {
         state.pumpState.rawValue >= PatchState.primed.rawValue
             || state.activationProgress.rawValue > ActivationProgress.priming.rawValue
@@ -503,11 +503,11 @@ public extension EquilPumpManager {
             return
         }
 
-        // RUN-mód GATE: prime sikere ELŐTT semmilyen dosing nem mehet (a wakePort RUN-t küldene).
+        // RUN mode GATE: no dosing before prime success (wakePort would send RUN).
         guard isPrimingComplete else {
-            log.warning("enactBolus blokkolva: a priming még nincs befejezve (RUN-mód tiltva)")
+            log.warning("enactBolus blocked: priming not complete (RUN mode disabled)")
             EquilLogBuffer.shared.append(
-                "enactBolus blokkolva: a priming még nincs befejezve (RUN-mód tiltva)",
+                "enactBolus blocked: priming not complete (RUN mode disabled)",
                 category: "EquilPumpManager",
                 level: .warning
             )
@@ -630,11 +630,11 @@ public extension EquilPumpManager {
     ) {
         let durationMinutes = max(0, Int(duration / 60))
 
-        // RUN-mód GATE: prime sikere ELŐTT a temp basal (és a benne lévő RUN/wake) tiltott.
+        // RUN mode GATE: temp basal (and its RUN/wake) blocked before prime success.
         guard isPrimingComplete else {
-            log.warning("enactTempBasal blokkolva: a priming még nincs befejezve (RUN-mód tiltva)")
+            log.warning("enactTempBasal blocked: priming not complete (RUN mode disabled)")
             EquilLogBuffer.shared.append(
-                "enactTempBasal blokkolva: a priming még nincs befejezve (RUN-mód tiltva)",
+                "enactTempBasal blocked: priming not complete (RUN mode disabled)",
                 category: "EquilPumpManager",
                 level: .warning
             )
@@ -683,7 +683,7 @@ public extension EquilPumpManager {
                 self.state.runMode = .suspend
                 self.state.lastSync = Date.now
                 self.notifyStateDidChange()
-                // Átmeneti MUTE: zero-temp (fizikai suspend) alatt a patch ne rezegjen/villogjon.
+                // Temporary MUTE: during zero-temp (physical suspend) patch should not vibrate/beep.
                 self.applyTransientMuteForSuspend()
                 completion(nil)
             }
@@ -743,12 +743,12 @@ public extension EquilPumpManager {
                     self.state.runMode = .run
                     self.state.lastSync = Date.now
                     self.notifyStateDidChange()
-                    // RUN-ba visszatérés: az átmeneti MUTE előtti alarm-mód visszaállítása.
+                    // Return to RUN: restore alarm mode before temporary MUTE.
                     self.restoreAlarmModeAfterResume()
-                    // AKKU-KÍMÉLÉS: a temp basal után NEM húzunk be külön historyt — a
-                    // következő `ensureCurrentPumpData` sync úgyis behozza (CmdHistoryGet).
-                    // A temp basal dose-event már kiment fent (emitPumpEvents), így az IOB
-                    // azonnal frissül; csak a redundáns extra BLE-olvasást spóroljuk meg.
+                    // BATTERY SAVING: after temp basal do NOT fetch separate history —
+                    // next `ensureCurrentPumpData` sync brings it (CmdHistoryGet).
+                    // Temp basal dose-event already emitted (emitPumpEvents), so IOB
+                    // updates immediately; only skip redundant extra BLE read.
                     completion(nil)
                 }
             }
@@ -794,18 +794,18 @@ public extension EquilPumpManager {
             self.state.runMode = .suspend
             self.state.lastSync = Date.now
             self.notifyStateDidChange()
-            // Átmeneti MUTE: suspend alatt a patch ne rezegjen/villogjon.
+            // Temporary MUTE: during suspend patch should not vibrate/beep.
             self.applyTransientMuteForSuspend()
             completion(nil)
         }
     }
 
     func resumeDelivery(completion: @escaping ((any Error)?) -> Void) {
-        // RUN-mód GATE: prime sikere ELŐTT a resume (CmdModelSet RUN) nem engedélyezett.
+        // RUN mode GATE: resume (CmdModelSet RUN) not allowed before prime success.
         guard isPrimingComplete else {
-            log.warning("resumeDelivery blokkolva: a priming még nincs befejezve (RUN-mód tiltva)")
+            log.warning("resumeDelivery blocked: priming not complete (RUN mode disabled)")
             EquilLogBuffer.shared.append(
-                "resumeDelivery blokkolva: a priming még nincs befejezve (RUN-mód tiltva)",
+                "resumeDelivery blocked: priming not complete (RUN mode disabled)",
                 category: "EquilPumpManager",
                 level: .warning
             )
@@ -832,7 +832,7 @@ public extension EquilPumpManager {
             self.state.runMode = .run
             self.state.lastSync = Date.now
             self.notifyStateDidChange()
-            // RUN-ba visszatérés: az átmeneti MUTE előtti alarm-mód visszaállítása.
+            // Return to RUN: restore alarm mode before temporary MUTE.
             self.restoreAlarmModeAfterResume()
             completion(nil)
         }
@@ -900,38 +900,38 @@ public extension EquilPumpManager {
         }
     }
 
-    // MARK: - Átmeneti MUTE suspend / zero-temp idejére (resume-nál visszaállítás)
+    // MARK: - Temporary MUTE during suspend / zero-temp (restore on resume)
 
-    /// Suspend / zero-temp BE-lépéskor: elmenti az aktuális alarm-módot, majd MUTE-ra vált,
-    /// hogy a patch ne rezegjen/villogjon a leállás alatt. CSAK ÁTMENETNÉL fut: ha már mute,
-    /// vagy már van mentett érték (verseny-védelem), NEM küld újra parancsot — így nem minden
+    /// On suspend / zero-temp entry: save current alarm mode, then switch to MUTE
+    /// so patch doesn't vibrate/beep while stopped. ONLY for transitions: if already mute,
+    /// or saved value exists (race guard), do NOT resend — so not every
     /// loop ciklusban megy mute.
     private func applyTransientMuteForSuspend() {
         guard !state.deviceToken.isEmpty else { return }
-        // Már van mentés (átmeneti mute aktív) → ne írjuk felül, ne küldjünk újra.
+        // Save already exists (temporary mute active) → don't overwrite, don't resend.
         guard state.savedAlarmModeBeforeSuspend == nil else { return }
-        // A user PERZISZTENS módja már Silent (mute) → nincs mit elnémítani, és NINCS mentés:
-        // így a resume-nál SOHA nem próbálunk visszaállítani semmit → marad Silent (nem vált Soundra).
+        // User PERSISTENT mode already Silent (mute) → nothing to mute, NO save:
+        // so on resume NEVER restore anything → stays Silent (won't switch to Sound).
         guard state.alarmModeRaw != AlarmMode.mute.rawValue else { return }
 
-        // A user perzisztens beállítását (alarmModeRaw) jegyezzük fel — de a mute-ot
-        // `persist: false`-szal küldjük, így az alarmModeRaw NEM íródik felül. Resume-nál
-        // alapértelmezetten Silent marad; csak `userExplicitAlarmMode` esetén áll vissza a mentett mód.
+        // Record user persistent setting (alarmModeRaw) — but send mute
+        // with `persist: false`, so alarmModeRaw is NOT overwritten. On resume
+        // Silent by default; only restore saved mode with `userExplicitAlarmMode`.
         state.savedAlarmModeBeforeSuspend = state.alarmModeRaw
         notifyStateDidChange()
         setAlarmMode(.mute, persist: false) { [weak self] result in
             guard let self else { return }
             if case .failure = result {
-                // Sikertelen mute → a mentést visszavonjuk, hogy a következő átmenet újrapróbálja.
+                // Failed mute → undo save so next transition retries.
                 self.state.savedAlarmModeBeforeSuspend = nil
                 self.notifyStateDidChange()
             }
         }
     }
 
-    /// Resume / pozitív-temp (RUN-ba visszatérés) esetén: alapértelmezetten Silent marad
-    /// (a patch már mute-on van az átmeneti mute miatt). Csak dashboard-ról explicit választott
-    /// nem-néma módot állítjuk vissza — a gyári `.tone` default SOHA nem kerül vissza.
+    /// On resume / positive-temp (return to RUN): Silent by default
+    /// (patch already muted from temporary mute). Only restore explicitly chosen
+    /// non-silent mode from dashboard — factory `.tone` default NEVER restored.
     private func restoreAlarmModeAfterResume() {
         guard let savedMode = state.savedAlarmModeBeforeSuspend else { return }
         state.savedAlarmModeBeforeSuspend = nil
@@ -943,7 +943,7 @@ public extension EquilPumpManager {
             return
         }
 
-        // Alapértelmezés: Silent — a patch már mute-on van, csak a lokális állapotot igazítjuk.
+        // Default: Silent — patch already muted, only align local state.
         if state.alarmModeRaw != AlarmMode.mute.rawValue {
             state.alarmModeRaw = AlarmMode.mute.rawValue
             notifyStateDidChange()
@@ -957,12 +957,12 @@ public extension EquilPumpManager {
             proceed()
             return
         }
-        // RUN-mód GATE: prime sikere ELŐTT SOHA ne küldjünk RUN-t (védelem; a dosing
-        // belépőket már a fenti guardok blokkolják, de a wake önállóan is biztosított).
+        // RUN mode GATE: NEVER send RUN before prime success (guard; dosing
+        // entry points blocked above, but wake independently guarded).
         guard isPrimingComplete else {
-            log.warning("wakePort0404ForDosing: RUN kihagyva — a priming még nincs befejezve")
+            log.warning("wakePort0404ForDosing: RUN skipped — priming not complete")
             EquilLogBuffer.shared.append(
-                "wakePort0404ForDosing: RUN kihagyva — a priming még nincs befejezve",
+                "wakePort0404ForDosing: RUN skipped — priming not complete",
                 category: "EquilPumpManager",
                 level: .warning
             )
@@ -974,10 +974,10 @@ public extension EquilPumpManager {
             proceed()
             return
         }
-        // AKKU-KÍMÉLÉS: ha BIZTOSAN RUN módban vagyunk, ne küldjünk felesleges
-        // CmdModelSet(RUN)-t (a sync `CmdRunningModeGet`-ből frissíti a runMode-ot).
-        // Bármi más (.none/.suspend/.stop/bizonytalan) esetén KÜLDJÜK, hogy a dózis
-        // ne maradjon el — biztonság elöl.
+        // BATTERY SAVING: if DEFINITELY in RUN mode, don't send unnecessary
+        // CmdModelSet(RUN) (sync updates runMode from `CmdRunningModeGet`).
+        // Anything else (.none/.suspend/.stop/uncertain) SEND RUN so dose
+        // isn't missed — safety first.
         guard state.runMode != .run else {
             proceed()
             return
@@ -1075,13 +1075,13 @@ public extension EquilPumpManager {
         }
     }
 
-    /// Igaz, amíg a priming fill-loop ténylegesen FUT (a queue szálbiztos flagje). A priming
-    /// képernyő ezt nézi, hogy a háttérben futó loop közben NE navigáljon el (egy köztes
-    /// dashboard-sync státusz-frissítésre sem) — csak siker/cancel navigál.
+    /// true while priming fill-loop actually RUNS (queue thread-safe flag). Priming
+    /// screen checks this so background loop does NOT navigate away (even on intermediate
+    /// dashboard-sync status update) — only success/cancel navigates.
     public var isPrimingActive: Bool { commandQueue.isPrimingFillActive }
 
-    /// Igaz, amíg a felhasználó a priming képernyőn van és elindította (vagy folytatja) a flow-t.
-    /// A latch a pumpManager szintjén él — túléli a VC/ViewModel újraépítést is.
+    /// true while user is on priming screen and started (or continues) the flow.
+    /// Latch lives at pumpManager level — survives VC/ViewModel rebuild.
     public var isPrimingFlowLatched: Bool {
         primingFlowLatchLock.lock()
         defer { primingFlowLatchLock.unlock() }
@@ -1107,8 +1107,8 @@ public extension EquilPumpManager {
         }
         latchPrimingFlow()
         state.pumpState = .priming
-        // runFill ELŐBB: szinkron fillLoopActivePublished=true, mielőtt notifyStateDidChange
-        // observer-t indítana (különben finishPrimingIfReady idő előtt navigál).
+        // runFill FIRST: sync fillLoopActivePublished=true before notifyStateDidChange
+        // would start observer (otherwise finishPrimingIfReady navigates early).
         commandQueue.runFill(auto: true) { result in
             guard result.success else {
                 completion(.failure(error: .connectionFailure(reason: result.errorMessage ?? "Prime failed")))
@@ -1134,10 +1134,10 @@ public extension EquilPumpManager {
         notifyStateDidChange()
     }
 
-    /// PRIMING STOP/CANCEL: a felhasználó leállítja a (esetleg elakadt) priming-loopot. A queue
-    /// fill-loopját tisztán leállítja, a futó parancsot megszakítja és a kapcsolatot bontja, hogy
-    /// az új parancsok (Delete Pump / deactivate / unpair) AZONNAL átmenjenek. A priming-állapotot
-    /// visszaállítja `filled`-re, hogy a UI ne ragadjon „Priming"-ben (újra-prime vagy törlés mehet).
+    /// PRIMING STOP/CANCEL: user stops (possibly stuck) priming loop. Queue
+    /// cleanly stops fill-loop, aborts running command and disconnects so
+    /// new commands (Delete Pump / deactivate / unpair) proceed IMMEDIATELY. Priming state
+    /// reset to `filled` so UI doesn't stick on "Priming" (re-prime or delete allowed).
     func cancelPriming() {
         commandQueue.cancelPriming()
         if state.pumpState == .priming {

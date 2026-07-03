@@ -1,6 +1,6 @@
 import Foundation
 
-/// EquilResponse megfelelője: a kimenő BLE csomagok listája.
+/// Equivalent to EquilResponse: the list of outgoing BLE packets.
 public struct EquilResponse {
     let createTime: Int64
     var send: [[UInt8]] = []
@@ -11,22 +11,22 @@ public struct EquilResponse {
 }
 
 public class EquilBaseCmd {
-    // MARK: - Companion (statikus, megosztott) állapot — BaseCmd.companion
+    // MARK: - Companion (static, shared) state — BaseCmd.companion
 
     static let DEFAULT_PORT = "0F0F"
     static var reqIndex: Int = 0
     static var pumpReqIndex: Int = 10
     static var rspIndex: Int = -1
 
-    /// Egy parancs-szekvencia (pairing vagy bólus) ELŐTT hívandó.
-    /// Visszaállítja a megosztott indexeket az AAPS kezdőértékeire.
+    /// Call BEFORE a command sequence (pairing or bolus).
+    /// Resets shared indices to AAPS initial values.
     static func resetState() {
         reqIndex = 0
         pumpReqIndex = 10
         rspIndex = -1
     }
 
-    // MARK: - Példányállapot
+    // MARK: - Instance state
 
     let createTime: Int64
     var port: String = "0404"
@@ -38,9 +38,9 @@ public class EquilBaseCmd {
     var runPwd: String?
     var runCode: String?
 
-    /// A párosító/SN/jelszó adatok injektálva (AAPS-ben Preferences-ből jön).
-    var equilDevice: String // tárolt device hex (SN-származék)
-    var equilPassword: String // tárolt 64-hex jelszó
+    /// Pairing/SN/password data injected (from Preferences in AAPS).
+    var equilDevice: String // stored device hex (SN-derived)
+    var equilPassword: String // stored 64-hex password
 
     init(createTime: Int64, equilDevice: String, equilPassword: String) {
         self.createTime = createTime
@@ -51,7 +51,7 @@ public class EquilBaseCmd {
     func getEquilDevices() -> String { equilDevice }
     func getEquilPassWord() -> String { equilPassword }
 
-    // MARK: - Bit-műveletek (BaseCmd)
+    // MARK: - Bit operations (BaseCmd)
 
     func toNewStart(_ number: UInt8) -> UInt8 { number & ~(1 << 7) }
     func toNewEndConf(_ number: UInt8) -> UInt8 { number | (1 << 7) }
@@ -59,7 +59,7 @@ public class EquilBaseCmd {
     func getIndex(_ b: UInt8) -> Int { Int(b) & 63 }
     func getBit(_ b: UInt8, _ i: Int) -> Int { (Int(b) >> i) & 0x1 }
 
-    /// BaseCmd.convertString — minden karakter elé "0".
+    /// BaseCmd.convertString — prepend "0" before every character.
     func convertString(_ input: String) -> String {
         var sb = ""
         for ch in input { sb += "0"
@@ -71,13 +71,13 @@ public class EquilBaseCmd {
 
     // MARK: - checkData (BaseCmd.checkData)
 
-    /// Beérkező csomag ellenőrzése: index != előző index, és crc8Maxim egyezés.
+    /// Validate incoming packet: index != previous index, and crc8Maxim matches.
     ///
-    /// VÉDELEM (priming race): a nyitva tartott kapcsolaton az előző lépés maradék/
-    /// ismételt notify-keretei is becsúszhatnak. Egy csonka (<6 byte) keret indexelése
-    /// korábban fatal trap volt (Array out of range), ezért minden index-elés ELŐTT
-    /// hosszt ellenőrzünk. A túl rövid keret érvénytelen → eldobjuk (return false),
-    /// így a dekódoló akkumulátora nem szennyeződik. A BLE-tartalom NEM változik.
+    /// GUARD (priming race): on a held-open connection, leftover/repeated notify frames
+    /// from the previous step can slip through. Indexing a truncated (<6 byte) frame
+    /// was previously a fatal trap (Array out of range), so BEFORE every index access
+    /// we check length. Too-short frames are invalid → discard (return false),
+    /// so the decoder accumulator stays clean. BLE payload is NOT changed.
     func checkData(_ data: [UInt8]) -> Bool {
         guard data.count >= 6 else { return false }
         if let response = response, !response.send.isEmpty {
@@ -113,35 +113,35 @@ public class EquilBaseCmd {
 
     // MARK: - decodeModel (BaseCmd.decodeModel)
 
-    /// A beérkezett csomag-darabokból visszaállítja a tag/iv/ciphertext mezőket.
-    /// Csomagstruktúra: az első csomagban a payload az utolsó 4 byte + a code a [10,11],
-    /// a többiben a 6. byte-tól a végéig.
+    /// Reconstructs tag/iv/ciphertext fields from received packet fragments.
+    /// Packet structure: first packet payload is last 4 bytes + code at [10,11],
+    /// subsequent packets from byte 6 to end.
     func decodeModel() -> EquilCmdModel {
         var model = EquilCmdModel()
         var list: [UInt8] = []
         guard let response = response, !response.send.isEmpty else { return model }
         for (index, bs) in response.send.enumerated() {
             if index == 0 {
-                // Az 1. csomag tartalmazza a code-ot ([10],[11]) és az utolsó 4 payload byte-ot.
-                // VÉDELEM: csonka (stray/maradék) keret esetén NEM indexelünk túl → üres modell.
-                // Üres modellel a decode()/decodeConfirm() AESUtil.decrypt-je
-                // decryptMissingField-et dob, amit a decodeStep/decodeConfirmStep elkap és
-                // response-resettel lekezel (nincs crash, csak "vár a valódi keretre").
+                // First packet contains code ([10],[11]) and last 4 payload bytes.
+                // GUARD: truncated (stray/leftover) frame → no out-of-bounds indexing → empty model.
+                // With empty model, decode()/decodeConfirm() AESUtil.decrypt
+                // throws decryptMissingField, caught by decodeStep/decodeConfirmStep
+                // handled with response reset (no crash, just waits for real frame).
                 guard bs.count >= 12 else { return EquilCmdModel() }
-                // utolsó 4 byte
+                // last 4 bytes
                 for i in (bs.count - 4) ..< bs.count { list.append(bs[i]) }
                 let codeByte = [bs[10], bs[11]]
                 model.code = EquilUtils.bytesToHex(codeByte).lowercased()
             } else {
-                // A folytató csomag a 6. byte-tól tartalmaz payloadot; ennél rövidebb keret
-                // (maradék/ack) érvénytelen darab → kihagyjuk (range 6..<count crash-védelem).
+                // Continuation packet payload from byte 6; shorter frames
+                // (leftover/ack) are invalid fragments → skip (range 6..<count crash guard).
                 guard bs.count >= 6 else { continue }
                 for i in 6 ..< bs.count { list.append(bs[i]) }
             }
         }
-        // list felosztás: tag(0..16), iv(16..28), ciphertext(28..).
-        // VÉDELEM: tag(16)+iv(12) = 28 byte minimum; ennél kevesebb hiányos csomag
-        // (maradék-keret) → üres modell, hogy a range-szeletek ne indexeljenek túl.
+        // list split: tag(0..16), iv(16..28), ciphertext(28..).
+        // GUARD: tag(16)+iv(12) = 28 byte minimum; less means incomplete packet
+        // (leftover frame) → empty model so range slices don't index out of bounds.
         guard list.count >= 28 else { return EquilCmdModel() }
         let list1 = Array(list[0 ..< 16])
         let list2 = Array(list[16 ..< (12 + 16)])
@@ -152,27 +152,27 @@ public class EquilBaseCmd {
         return model
     }
 
-    // MARK: - decodeEquilPacket (BaseSetting/CmdPair állapotgép)
+    // MARK: - decodeEquilPacket (BaseSetting/CmdPair state machine)
 
     //
-    //  A BLE notify-ból érkező egyes csomagokat gyűjti, és ha a csomag isEnd
-    //  bitje (bit7) be van állítva, lefuttatja a fázishoz tartozó decode lépést.
-    //  Két fázis a `config` flag szerint:
-    //    - config == false → 1. fázis: gyűjt, majd decode() → 2. üzenet payloadja,
+    //  Collects individual packets from BLE notify; when packet isEnd
+    //  bit (bit7) is set, runs the decode step for that phase.
+    //  Two phases based on `config` flag:
+    //    - config == false → phase 1: collect, then decode() → 2nd message payload,
     //                        config = true.
-    //    - config == true  → 2. fázis: gyűjt, majd decodeConfirm() → 3. üzenet /
+    //    - config == true  → phase 2: collect, then decodeConfirm() → 3rd message /
     //                        siker (isEnd = true).
     //
-    //  A decode()/decodeConfirm() lépéseket az alosztály adja (BaseSetting/CmdPair).
-    //  Visszatérési érték: a következő kimenő EquilResponse, vagy nil ha még nincs
-    //  teljes üzenet (vagy a folyamat lezárult).
+    //  decode()/decodeConfirm() steps provided by subclass (BaseSetting/CmdPair).
+    //  Return value: next outgoing EquilResponse, or nil if no
+    //  complete message yet (or process finished).
     public func decodeEquilPacket(_ data: [UInt8]) -> EquilResponse? {
         guard checkData(data) else { return nil }
         let code = data[4]
         let intValue = getIndex(code)
 
         if config {
-            if EquilBaseCmd.rspIndex == intValue { return nil } // duplikált csomag
+            if EquilBaseCmd.rspIndex == intValue { return nil } // duplicate packet
             let flag = isEnd(code)
             response?.add(data)
             if !flag { return nil }
@@ -193,18 +193,18 @@ public class EquilBaseCmd {
         return next
     }
 
-    /// Az 1. fázis lezárása (BaseSetting/CmdPair `decode()`). Alosztály felülírja.
+    /// Phase 1 completion (BaseSetting/CmdPair `decode()`). Subclass overrides.
     func decodeStep() -> EquilResponse? { nil }
-    /// A 2. fázis lezárása (BaseSetting/CmdPair `decodeConfirm()`). Alosztály felülírja.
+    /// Phase 2 completion (BaseSetting/CmdPair `decodeConfirm()`). Subclass overrides.
     func decodeConfirmStep() -> EquilResponse? { nil }
 
-    // MARK: - EquilCommandDriving alapok (a runner ezeket hívja)
+    // MARK: - EquilCommandDriving basics (runner calls these)
 
     //
-    //  A `decodeEquilPacket`, `cmdSuccess`, `enacted` itt, az ősön él — közös minden
-    //  parancsra. A `label` és `firstResponse()` parancsfüggő: az ős ad egy alapértelmezést
-    //  (a leszármazott felülírja). Így az `EquilBaseCmd: EquilCommandDriving` konformancia
-    //  egy helyen, az ősön teljesül; a CmdPair/CmdLargeBasalSet csak felülír.
+    //  `decodeEquilPacket`, `cmdSuccess`, `enacted` live here on base class — shared by all
+    //  commands. `label` and `firstResponse()` are command-specific: base provides default
+    //  (subclass overrides). Thus `EquilBaseCmd: EquilCommandDriving` conformance
+    //  is satisfied in one place on base; CmdPair/CmdLargeBasalSet only override.
     var commandLabel: String { "Equil command" }
     func makeFirstResponse() throws -> EquilResponse {
         throw EquilError.invalidState("firstResponse not implemented (\(type(of: self)))")

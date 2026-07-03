@@ -22,9 +22,9 @@ public final class EquilCommandQueue {
         public var ackWait: TimeInterval
         public var allowPreempt: Bool
         public var cmdTimeout: TimeInterval
-        /// Ha igaz: a connect-per-command notify-flush a RÖVID (fastReconnect) profillal fut,
-        /// és a parancs-utáni settle is rövidebb → ~2 mp/lépés reconnect-floor. A priming
-        /// fill-loop állítja be (CmdStepSet / CmdResistanceGet). Bolus/temp/model: false (konzervatív).
+        /// If true: connect-per-command notify-flush uses SHORT (fastReconnect) profile,
+        /// and post-command settle is shorter → ~2s/step reconnect floor. Priming
+        /// fill-loop sets this (CmdStepSet / CmdResistanceGet). Bolus/temp/model: false (conservative).
         public var fastReconnect: Bool
 
         public init(
@@ -43,10 +43,10 @@ public final class EquilCommandQueue {
 
         public static let `default` = CommandOptions()
 
-        /// A priming fill-loop parancsainak opciói: per-parancs timeout (retry-hez elég türelmes),
-        /// gyors notify-flush + rövid settle. A connect-per-command STABIL marad, csak a
-        /// felesleges várakozás megy. A 15s cmdTimeout túl szűk volt resistance dupla-olvasás +
-        /// session-quiesce mellett → időnként „timeout / BLE connection timeout”.
+        /// Priming fill-loop command options: per-command timeout (patient enough for retry),
+        /// fast notify-flush + short settle. connect-per-command stays STABLE, only
+        /// excess wait removed. 15s cmdTimeout too tight for resistance double-read +
+        /// session-quiesce → occasional "timeout / BLE connection timeout".
         public static let fillFast = CommandOptions(cmdTimeout: 25, fastReconnect: true)
     }
 
@@ -59,34 +59,34 @@ public final class EquilCommandQueue {
     private var pipelineBusy = false
     private var pendingBlocks: [() -> Void] = []
     private var commandInFlight = false
-    /// Aktív connect-per-command fázis megszakítása (priming cancel / delete takeover).
-    /// A connect-timeout várakozás alatt a runner.abort() no-op — ezt hívjuk cancelPriming-ből.
+    /// Abort active connect-per-command phase (priming cancel / delete takeover).
+    /// During connect-timeout wait runner.abort() is no-op — call this from cancelPriming.
     private var activeConnectCancel: (() -> Void)?
 
     // MARK: - FILL-LOOP CANCEL (priming Stop gomb / deactivate force-takeover)
 
-    /// Igaz, amíg auto fill-loop (priming) fut. A `cancelPriming()` ezt nézi, hogy van-e mit
-    /// megszakítani, és a futó parancs abort-ját kell-e elvégeznie.
+    /// true while auto fill-loop (priming) runs. `cancelPriming()` checks if there is
+    /// anything to abort and whether running command abort is needed.
     private var fillLoopActive = false
-    /// Ha igaz: a fill-loop a következő iteráció/retry ELŐTT tisztán leáll (nem indít több
-    /// lépést/retry-t). A `cancelPriming()` állítja be; a `runFill` nullázza új priming indításkor.
+    /// If true: fill-loop stops cleanly BEFORE next iteration/retry (no more
+    /// steps/retries). Set by `cancelPriming()`; `runFill` clears on new priming start.
     private var fillCancelled = false
 
-    /// A `fillLoopActive` SZÁLBIZTOS tükre a UI számára (a UI fő szálról olvassa, a flag a
-    /// workQueue-n mutálódik). A priming képernyő ezt nézi: amíg a fill-loop AKTÍV (a háttérben
-    /// fut a StepSet→Resistance lánc), a státusz-observer NEM navigál el — különben egy köztes
-    /// státusz-frissítés (pl. dashboard-sync) idő előtt a dashboardra ugratná a UI-t. Lock-mentes
-    /// olvasás: a `os_unfair_lock` helyett egy egyszerű, atomi `Bool` írás/olvasás külön lockkal.
+    /// THREAD-SAFE mirror of `fillLoopActive` for UI (UI reads on main thread, flag mutates on
+    /// workQueue). Priming screen checks: while fill-loop ACTIVE (StepSet→Resistance chain
+    /// running in background), status observer must NOT navigate — otherwise intermediate
+    /// status update (e.g. dashboard-sync) would jump UI to dashboard early. Lock-free
+    /// read: simple atomic Bool read/write with separate lock instead of `os_unfair_lock`.
     private let fillLoopFlagLock = NSLock()
     private var fillLoopActivePublished = false
 
-    /// Igaz, amíg a priming fill-loop ténylegesen FUT (szálbiztosan olvasható bárhonnan).
+    /// true while priming fill-loop actually RUNS (thread-safe read from anywhere).
     public var isPrimingFillActive: Bool {
         fillLoopFlagLock.lock(); defer { fillLoopFlagLock.unlock() }
         return fillLoopActivePublished
     }
 
-    /// A `fillLoopActive` ÉS a szálbiztos tükör együttes beállítása (mindig ezen keresztül).
+    /// Set `fillLoopActive` AND thread-safe mirror together (always via this).
     private func setFillLoopActive(_ active: Bool) {
         fillLoopActive = active
         fillLoopFlagLock.lock()
@@ -96,29 +96,29 @@ public final class EquilCommandQueue {
 
     private let bleNextCmdDelay: TimeInterval = Double(EquilConst.EQUIL_BLE_NEXT_CMD) / 1000.0
 
-    /// Connect-per-command parancs-utáni settle a bontás (disconnect) UTÁN, MIELŐTT a következő
-    /// lépés connect-je indul. A teljes 0,5s (bleNextCmdDelay) felesleges volt: a connectForCommand
-    /// úgyis újracsatlakozik, ott már nincs külön settle (isConnected==false). Itt elég egy rövid
-    /// köz, hogy az iOS a bontást feldolgozza — a fill-loop fastReconnect parancsai ezt használják.
+    /// Connect-per-command post-command settle AFTER disconnect, BEFORE next
+    /// step connect starts. Full 0.5s (bleNextCmdDelay) was excess: connectForCommand
+    /// reconnects anyway, no separate settle there (isConnected==false). Short gap here
+    /// for iOS to process disconnect — fill-loop fastReconnect commands use this.
     private let fastReconnectSettle: TimeInterval = 0.15
 
     // MARK: - FILL-LOOP AUTO-RETRY
 
-    /// A priming fill-loop egy lépésének (CmdStepSet / CmdResistanceGet) MAXIMÁLIS automatikus
-    /// újrapróbálkozása timeout/disconnect/communication hiba esetén, MIELŐTT valódi hibát jelez.
-    /// Így a loop magától folytatódik, nem kell kézzel újranyomni a prime-ot.
+    /// MAX automatic retries for one priming fill-loop step (CmdStepSet / CmdResistanceGet)
+    /// on timeout/disconnect/communication error, BEFORE reporting real failure.
+    /// Loop continues on its own, no manual re-prime needed.
     private static let fillMaxAttempts = 7
 
-    /// BLE connect timeout. A háttérbeli loop (iOS throttling + GATT discovery + konzervatív
-    /// notify-flush) gyakran túllépi a korábbi 15s-t; a priming 25s-e bizonyítottan elég.
-    /// Bolus/temp/sync/loop ugyanezt a küszöböt kapja (fastReconnect továbbra is 25s).
+    /// BLE connect timeout. Background loop (iOS throttling + GATT discovery + conservative
+    /// notify-flush) often exceeded prior 15s; priming 25s proven sufficient.
+    /// Bolus/temp/sync/loop get same threshold (fastReconnect still 25s).
     private static let defaultConnectionTimeout: TimeInterval = 25
     private static let primingConnectionTimeout: TimeInterval = 25
 
-    /// Backoff a fill-retry-k között. ALSÓ KÜSZÖB = EQUIL_BLE_NEXT_CMD (0,5s): egy hibás/
-    /// fragmentált olvasás után a következő próba connectje ELŐTT legalább 500 ms teljen el,
-    /// hogy a pumpa ~390 ms-es ismétlési ciklusa elcsendesedjen (ne szivárogjon stale-frame).
-    /// Onnan rövid exponenciális emelkedés, 2,0s plafonnal: 0,5 → 0,6 → 1,2 → 2,0.
+    /// Backoff between fill-retries. LOWER BOUND = EQUIL_BLE_NEXT_CMD (0.5s): after bad/
+    /// fragmented read, at least 500ms before next attempt connect,
+    /// so pump ~390ms repeat cycle quiesces (no stale-frame leak).
+    /// Then short exponential rise, 2.0s cap: 0.5 → 0.6 → 1.2 → 2.0.
     private static func fillRetryBackoff(attempt: Int) -> TimeInterval {
         let floor = Double(EquilConst.EQUIL_BLE_NEXT_CMD) / 1000.0
         return min(max(floor, 0.3 * pow(2.0, Double(attempt))), 2.0)
@@ -166,7 +166,7 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// Ugyanaz mint `executeCmd`, de szinkron enqueue a workQueue-n (delete/unpair takeover után).
+    /// Same as `executeCmd`, but synchronous enqueue on workQueue (after delete/unpair takeover).
     func executeCmdOnWorkQueue(
         _ makeCommand: @escaping () -> EquilCommandDriving,
         timeout: TimeInterval = 30,
@@ -200,10 +200,10 @@ public final class EquilCommandQueue {
 
     // MARK: - DOSING AUTO-RETRY (bolus / temp basal)
 
-    /// Bolus és temp basal parancsok automatikus újrapróbálkozása BLE timeout/disconnect esetén.
-    /// Egyszerűbb, mint a fill-retry: max 2 auto-retry (3 próba összesen), rövid backoff,
-    /// bontás + index reset a következő connect előtt. A `makeCommand` MINDEN próbánál friss
-    /// parancsot épít (friss createTime).
+    /// Auto-retry bolus and temp basal commands on BLE timeout/disconnect.
+    /// Simpler than fill-retry: max 2 auto-retry (3 attempts total), short backoff,
+    /// disconnect + index reset before next connect. `makeCommand` builds fresh
+    /// command every attempt (fresh createTime).
     private static let dosingMaxAttempts = 3
 
     public func executeCmdWithRetry(
@@ -221,12 +221,12 @@ public final class EquilCommandQueue {
             }
             let nextAttempt = attempt + 1
             if nextAttempt >= Self.dosingMaxAttempts {
-                self.log("DOSING: retry kimerült (\(nextAttempt)/\(Self.dosingMaxAttempts)) — \(result.errorMessage ?? "ismeretlen hiba")")
+                self.log("DOSING: retries exhausted (\(nextAttempt)/\(Self.dosingMaxAttempts)) — \(result.errorMessage ?? "unknown error")")
                 completion(result)
                 return
             }
             let backoff = Self.fillRetryBackoff(attempt: attempt)
-            self.log("DOSING: hiba (\(result.errorMessage ?? "?")) — auto-retry \(nextAttempt + 1)/\(Self.dosingMaxAttempts) \(Int(backoff * 1000))ms múlva")
+            self.log("DOSING: error (\(result.errorMessage ?? "?")) — auto-retry \(nextAttempt + 1)/\(Self.dosingMaxAttempts) in \(Int(backoff * 1000))ms")
             self.workQueue.asyncAfter(deadline: .now() + backoff) {
                 self.recoverCommErrorOnWorkQueue(reason: result.errorMessage ?? "comm error")
                 self.executeCmdWithRetry(
@@ -275,16 +275,16 @@ public final class EquilCommandQueue {
 
     // MARK: - Activation helpers
 
-    /// A priming auto fill-loopban a resistance-ellenőrzés gyakorisága: a `CmdResistanceGet`
-    /// MINDEN lépésnél fut (connect-per-command: StepSet és ResistanceGet külön connect).
-    /// A küszöb-átlépést a `readResistanceConfirmed` dupla-olvasása továbbra is megerősíti.
+    /// Resistance check frequency in priming auto fill-loop: `CmdResistanceGet`
+    /// runs EVERY step (connect-per-command: StepSet and ResistanceGet separate connect).
+    /// Threshold crossing still confirmed by `readResistanceConfirmed` double-read.
     private static let resistanceCheckEvery = 1
 
-    /// Egy fill-parancs futtatása AUTO-RETRY-vel: timeout/disconnect/communication hibánál
-    /// automatikusan újrapróbálja UGYANAZT a parancsot (friss connect + parancs), rövid
-    /// exponenciális backoff-fal, max `fillMaxAttempts`-szer. CSAK több egymás utáni sikertelen
-    /// próba után jelez valódi hibát. A `makeCommand` MINDEN próbánál friss parancsot épít
-    /// (friss createTime), hogy a pumpa ne dobja el elavult időbélyeg miatt.
+    /// Run one fill command with AUTO-RETRY: on timeout/disconnect/communication error
+    /// automatically retries SAME command (fresh connect + command), short
+    /// exponential backoff, max `fillMaxAttempts` times. ONLY after multiple consecutive failed
+    /// attempts reports real error. `makeCommand` builds fresh command EVERY attempt
+    /// (fresh createTime) so pump does not reject stale timestamp.
     private func executeFillCmd(
         _ makeCommand: @escaping () -> EquilCommandDriving,
         attempt: Int = 0,
@@ -296,28 +296,28 @@ public final class EquilCommandQueue {
                 completion(result)
                 return
             }
-            // CANCEL-ELLENŐRZÉS retry ELŐTT: ha közben leállították a priming-et, NEM próbálunk újra.
+            // CANCEL CHECK before retry: if priming stopped meanwhile, do NOT retry.
             if self.fillCancelled {
-                self.log("FILL: retry kihagyva (priming megszakítva)")
+                self.log("FILL: retry skipped (priming cancelled)")
                 completion(result)
                 return
             }
             let nextAttempt = attempt + 1
             if nextAttempt >= Self.fillMaxAttempts {
-                self.log("FILL: retry kimerült (\(nextAttempt)/\(Self.fillMaxAttempts)) — \(result.errorMessage ?? "ismeretlen hiba")")
+                self.log("FILL: retries exhausted (\(nextAttempt)/\(Self.fillMaxAttempts)) — \(result.errorMessage ?? "unknown error")")
                 completion(result)
                 return
             }
             let backoff = Self.fillRetryBackoff(attempt: attempt)
-            self.log("FILL: lépés hiba (\(result.errorMessage ?? "?")) — auto-retry \(nextAttempt + 1)/\(Self.fillMaxAttempts) \(Int(backoff * 1000))ms múlva (reconnect + parancs)")
+            self.log("FILL: step error (\(result.errorMessage ?? "?")) — auto-retry \(nextAttempt + 1)/\(Self.fillMaxAttempts) in \(Int(backoff * 1000))ms (reconnect + command)")
             self.workQueue.asyncAfter(deadline: .now() + backoff) {
-                // A backoff letelte után is ellenőrizzük: cancel közben ne induljon új parancs.
+                // After backoff also check: do not start new command if cancelled.
                 if self.fillCancelled {
-                    self.log("FILL: retry elvetve a backoff után (priming megszakítva)")
+                    self.log("FILL: retry dropped after backoff (priming cancelled)")
                     completion(result)
                     return
                 }
-                // Fill retry recovery: bontás + index reset, majd friss connect (fastReconnect).
+                // Fill retry recovery: disconnect + index reset, then fresh connect (fastReconnect).
                 self.recoverFillCommandOnWorkQueue(reason: result.errorMessage ?? "comm error")
                 self.executeFillCmd(makeCommand, attempt: nextAttempt, completion: completion)
             }
@@ -331,13 +331,13 @@ public final class EquilCommandQueue {
         stepSize: Int = EquilConst.EQUIL_STEP_FILL,
         completion: @escaping (CommandResult, Int, Int) -> Void
     ) {
-        // SIMA PRIMING: a lépés mérete fix 320 (EQUIL_STEP_FILL) — a coarse-to-fine
-        // (resistance-alapú lépéscsökkentés) ELTÁVOLÍTVA. A `stepSize` paraméter megmarad
-        // (mindig 320-at kap), a BLE opcode/parancstartalom változatlan.
+        // SIMPLE PRIMING: step size fixed 320 (EQUIL_STEP_FILL) — coarse-to-fine
+        // (resistance-based step reduction) REMOVED. `stepSize` parameter remains
+        // (always gets 320), BLE opcode/command payload unchanged.
         let step = stepSize
 
-        // AUTO PRIMING: ResistanceGet MINDEN StepSet ELŐTT (resistanceCheckEvery=1).
-        // Ha a patch már primeolt / a küszöbön van, NEM lőjük a 320-as lépést.
+        // AUTO PRIMING: ResistanceGet BEFORE EVERY StepSet (resistanceCheckEvery=1).
+        // If patch already primed / at threshold, do NOT fire 320 step.
         if auto {
             readResistanceConfirmed { resistanceResult, resistanceValue in
                 guard resistanceResult.success else {
@@ -345,7 +345,7 @@ public final class EquilCommandQueue {
                     return
                 }
                 if resistanceResult.enacted {
-                    self.log("RESISTANCE: küszöb elérve ELŐTT StepSet (érték=\(resistanceValue)) — priming KÉSZ, lövés kihagyva")
+                    self.log("RESISTANCE: threshold reached BEFORE StepSet (value=\(resistanceValue)) — priming DONE, step skipped")
                     completion(.success(enacted: true), currentStep, resistanceValue)
                     return
                 }
@@ -360,7 +360,7 @@ public final class EquilCommandQueue {
             return
         }
 
-        // Kézi fill: StepSet, majd resistance (régi sorrend).
+        // Manual fill: StepSet, then resistance (legacy order).
         runFillStepSet(currentStep: currentStep, step: step) { stepResult, newStep in
             guard stepResult.success else {
                 completion(stepResult, currentStep, -1)
@@ -372,7 +372,7 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// Egy fill-lépés CmdStepSet (auto-retry-vel). A resistance-ellenőrzés a hívó felelőssége.
+    /// One fill step CmdStepSet (with auto-retry). Caller responsible for resistance check.
     private func runFillStepSet(
         currentStep: Int,
         step: Int,
@@ -387,7 +387,7 @@ public final class EquilCommandQueue {
                 equilPassword: self?.equilPassword ?? ""
             )
         }
-        log("FILL: lépés step=\(step) (kumulatív \(currentStep)→\(currentStep + step))")
+        log("FILL: step step=\(step) (cumulative \(currentStep)→\(currentStep + step))")
         executeFillCmd(makeStep) { stepResult in
             guard stepResult.success else {
                 completion(stepResult, currentStep)
@@ -407,11 +407,11 @@ public final class EquilCommandQueue {
         startingStep: Int = 0,
         completion: @escaping (CommandResult) -> Void
     ) {
-        // CONNECT-PER-COMMAND PRIMING (AAPS minta): minden CmdStepSet ÉS CmdResistanceGet
-        // külön connect → parancs → disconnect; fastReconnect notify-flush + 0,15s settle
-        // (~1–2 mp/parancs, ~2–4 mp/lépés StepSet+Resistance). Held-open session eltávolítva.
-        // NAV-GUARD: a publikált priming-flag AZONNAL, SZINKRON igaz — MIELŐTT a workQueue-ra
-        // lépnénk, hogy a status-observer a startPrime pillanatától aktív priminget lát.
+        // CONNECT-PER-COMMAND PRIMING (AAPS pattern): every CmdStepSet AND CmdResistanceGet
+        // separate connect → command → disconnect; fastReconnect notify-flush + 0.15s settle
+        // (~1–2s/command, ~2–4s/step StepSet+Resistance). Held-open session removed.
+        // NAV-GUARD: published priming-flag IMMEDIATELY, SYNC true — BEFORE dispatching to workQueue
+        // so status-observer sees active priming from startPrime moment.
         fillLoopFlagLock.lock()
         fillLoopActivePublished = true
         fillLoopFlagLock.unlock()
@@ -430,15 +430,15 @@ public final class EquilCommandQueue {
                     completion(result)
                 }
             }
-            // AUTO: indulás előtti resistance — már primeolt patch esetén NE lőjön StepSet-et.
+            // AUTO: pre-start resistance — if already primed patch do NOT fire StepSet.
             if auto {
                 let threshold = Self.resistanceThreshold(for: self.serialNumber)
-                self.log("PRIMING: indulás előtti resistance ellenőrzés (küszöb=\(threshold))")
+                self.log("PRIMING: pre-start resistance check (threshold=\(threshold))")
                 self.readResistanceConfirmed { preResult, preValue in
                     if self.fillCancelled {
                         self.disconnectFillLoopCleanupOnWorkQueue()
                         self.setFillLoopActive(false)
-                        completion(.failure("Priming megszakítva"))
+                        completion(.failure("Priming cancelled"))
                         return
                     }
                     guard preResult.success else {
@@ -448,13 +448,13 @@ public final class EquilCommandQueue {
                         return
                     }
                     if preResult.enacted {
-                        self.log("PRIMING: már primeolt (érték=\(preValue), küszöb=\(threshold)) — StepSet kihagyva, activation következik")
+                        self.log("PRIMING: already primed (value=\(preValue), threshold=\(threshold)) — StepSet skipped, activation next")
                         self.disconnectFillLoopCleanupOnWorkQueue()
                         self.setFillLoopActive(false)
                         completion(.success(enacted: true))
                         return
                     }
-                    self.log("PRIMING: indulás OK (érték=\(preValue), küszöb=\(threshold)) — fill-loop indul")
+                    self.log("PRIMING: start OK (value=\(preValue), threshold=\(threshold)) — fill-loop starting")
                     startLoop()
                 }
             } else {
@@ -463,19 +463,19 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// PRIMING STOP/CANCEL: a futó fill-loopot tisztán leállítja, a folyamatban lévő BLE-parancsot
-    /// megszakítja, a függő (nem futó) blokkokat eldobja, és bontja a kapcsolatot — hogy a queue
-    /// AZONNAL szabad legyen az új parancsoknak (Delete Pump / deactivate / unpair). A futó parancs
-    /// normál finish-lánca szabadítja fel a pipeline-t (nem nyúlunk a pipelineBusy-hoz itt, hogy ne
-    /// ütközzön). A `fillCancelled` megakadályozza a további iterációt/retry-t.
+    /// PRIMING STOP/CANCEL: cleanly stops running fill-loop, aborts in-flight BLE command,
+    /// drops pending (non-running) blocks, disconnects — so queue
+    /// is IMMEDIATELY free for new commands (Delete Pump / deactivate / unpair). Running command
+    /// normal finish chain frees pipeline (do not touch pipelineBusy here to avoid
+    /// conflict). `fillCancelled` prevents further iteration/retry.
     public func cancelPriming() {
         workQueue.async {
             self.cancelPrimingOnWorkQueue(clearPendingBlocks: true)
         }
     }
 
-    /// Atomikus priming-leállítás + azonnali parancs (retract/stop/unpair). Egy workQueue-blokkban
-    /// fut, hogy a cancel `pendingBlocks.removeAll()` ne dobja el a delete/unpair retract-jét.
+    /// Atomic priming stop + immediate command (retract/stop/unpair). One workQueue block
+    /// so cancel `pendingBlocks.removeAll()` does not drop delete/unpair retract.
     func executeAfterPrimingCancelled(_ block: @escaping () -> Void) {
         workQueue.async {
             self.cancelPrimingOnWorkQueue(clearPendingBlocks: true)
@@ -483,10 +483,10 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// Priming cancel belső implementáció (mindig a workQueue-n hívandó).
+    /// Priming cancel internal implementation (always call on workQueue).
     private func cancelPrimingOnWorkQueue(clearPendingBlocks: Bool) {
         fillCancelled = true
-        log("PRIMING: STOP/CANCEL — fill-loop leáll, futó parancs megszakítva, queue ürítve")
+        log("PRIMING: STOP/CANCEL — fill-loop stopped, running command aborted, queue drained")
         if clearPendingBlocks {
             pendingBlocks.removeAll()
         }
@@ -500,8 +500,8 @@ public final class EquilCommandQueue {
         setFillLoopActive(false)
     }
 
-    /// A rekurzív fill-munkavégző (NEM nyit/zár session-t — azt a `runFill` kezeli egyszer).
-    /// `iteration`: 0-bázisú lépésszámláló; auto módban minden iteráció ELŐTT ResistanceGet fut.
+    /// Recursive fill worker (does NOT open/close session — `runFill` handles once).
+    /// `iteration`: 0-based step counter; in auto mode ResistanceGet runs BEFORE every iteration.
     private func runFillLoop(
         auto: Bool,
         startingStep: Int,
@@ -509,12 +509,12 @@ public final class EquilCommandQueue {
         nextStepSize: Int = EquilConst.EQUIL_STEP_FILL,
         completion: @escaping (CommandResult) -> Void
     ) {
-        // CANCEL-ELLENŐRZÉS minden iteráció ELŐTT: ha a felhasználó leállította a priming-et,
-        // tisztán kilépünk (nem indítunk több lépést). A priming-flag-et NEM itt nullázzuk —
-        // a `runFill` completion-wrapper-e törli EGYSZER a teljes loop legvégén.
+        // CANCEL CHECK before every iteration: if user stopped priming,
+        // exit cleanly (no more steps). Do NOT clear priming-flag here —
+        // `runFill` completion wrapper clears ONCE at full loop end.
         if fillCancelled {
-            log("PRIMING: fill-loop leállt (cancel) — \(startingStep) lépésnél")
-            completion(.failure("Priming megszakítva"))
+            log("PRIMING: fill-loop stopped (cancel) — at step \(startingStep)")
+            completion(.failure("Priming cancelled"))
             return
         }
         runFillIteration(
@@ -531,15 +531,15 @@ public final class EquilCommandQueue {
                 completion(.success(enacted: true))
                 return
             }
-            // Cancel a lépés és a következő iteráció között is megszakít.
+            // Cancel also between step and next iteration.
             if self.fillCancelled {
-                self.log("PRIMING: fill-loop leállt (cancel) — \(step) lépésnél")
-                completion(.failure("Priming megszakítva"))
+                self.log("PRIMING: fill-loop stopped (cancel) — at step \(step)")
+                completion(.failure("Priming cancelled"))
                 return
             }
             if auto {
-                // SIMA PRIMING: MINDEN lépés fix 320-as adag (EQUIL_STEP_FILL).
-                // Resistance minden lépésnél; a küszöb-átlépést readResistanceConfirmed erősíti.
+                // SIMPLE PRIMING: EVERY step fixed 320 unit (EQUIL_STEP_FILL).
+                // Resistance every step; threshold crossing confirmed by readResistanceConfirmed.
                 _ = resistance
                 self.runFillLoop(
                     auto: true,
@@ -554,24 +554,24 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// Fill-loop lezárás / cancel után: bontás, hogy ne maradjon nyitott kapcsolat.
+    /// After fill-loop end / cancel: disconnect so no open connection remains.
     private func disconnectFillLoopCleanupOnWorkQueue() {
         ble.onReady = nil
         ble.onConnected = nil
         if ble.isConnected { ble.disconnect() }
     }
 
-    /// Fill-loop retry / confirm előtti cleanup: bontás + index reset, hogy a következő
-    /// connect-per-command lépés tiszta fastReconnect útvonalon induljon.
+    /// Fill-loop retry / pre-confirm cleanup: disconnect + index reset so next
+    /// connect-per-command step starts on clean fastReconnect path.
     private func recoverFillCommandOnWorkQueue(reason: String) {
         guard fillLoopActive else { return }
-        log("FILL: helyreállítás (\(reason)) — bontás + index reset")
+        log("FILL: recovery (\(reason)) — disconnect + index reset")
         recoverCommErrorOnWorkQueue(reason: reason)
     }
 
-    /// Közös BLE-helyreállítás dosing-retry (és fill-retry) előtt: bontás + index reset.
+    /// Shared BLE recovery before dosing-retry (and fill-retry): disconnect + index reset.
     private func recoverCommErrorOnWorkQueue(reason: String) {
-        log("COMM: helyreállítás (\(reason)) — bontás + index reset")
+        log("COMM: recovery (\(reason)) — disconnect + index reset")
         ble.onReady = nil
         ble.onConnected = nil
         runner.abort()
@@ -608,12 +608,12 @@ public final class EquilCommandQueue {
         readResistanceRaw { result, _ in completion(result) }
     }
 
-    /// Resistance-olvasás a NYERS ÉRTÉKKEL együtt (logolás + coarse-to-fine döntés).
-    /// A resistance-lekérdezés tiszta GET → az auto-retry teljesen biztonságos (idempotens).
-    /// Minden próbánál friss parancs (friss createTime); a legutóbbi parancs `enacted`-jét és a
-    /// dekódolt NYERS `resistance` értékét (data[6..7]) adjuk vissza. A nyers értéket a syslogba
-    /// is kiírjuk: ebből validálható, fokozatosan nő-e a resistance (coarse-to-fine hatékony),
-    /// vagy a küszöbre UGRIK (akkor a coarse-to-fine nem tud előre finomítani). -1 ha nem olvasható.
+    /// Resistance read with RAW VALUE (logging + coarse-to-fine decision).
+    /// Resistance query is pure GET → auto-retry fully safe (idempotent).
+    /// Fresh command every attempt (fresh createTime); return latest command `enacted` and
+    /// decoded RAW `resistance` value (data[6..7]). Raw value also logged to syslog
+    /// to validate gradual resistance increase (coarse-to-fine effective),
+    /// or JUMPS to threshold (then coarse-to-fine cannot refine ahead). -1 if unreadable.
     private func readResistanceRaw(completion: @escaping (CommandResult, Int) -> Void) {
         let threshold = Self.resistanceThreshold(for: serialNumber)
         var lastCmd: CmdResistanceGet?
@@ -632,8 +632,8 @@ public final class EquilCommandQueue {
             let enacted = lastCmd?.enacted ?? false
             if result.success {
                 // NYERS RESISTANCE LOG (a "✓ cmdSuccess" mellett) — a fokozatos vs hirtelen
-                // emelkedés validálásához. Ezt keresd a syslogban: "RESISTANCE: érték=…".
-                self?.log("RESISTANCE: érték=\(value) (küszöb=\(threshold), enacted=\(enacted))")
+                // for rise validation. Look in syslog: "RESISTANCE: value=…".
+                self?.log("RESISTANCE: value=\(value) (threshold=\(threshold), enacted=\(enacted))")
             }
             completion(
                 CommandResult(success: result.success, enacted: enacted, errorMessage: result.errorMessage),
@@ -642,39 +642,39 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// SAFETY / priming-complete VÉDELEM: a küszöb-átlépést (`enacted=true`) NEM fogadjuk el
-    /// egyetlen resistance-olvasásból. Egy stale/romlott BLE-keret tévesen MAGAS resistance-nek
-    /// dekódolódhat (data[6..7]), így a priming az ELSŐ lépés után késznek hihetné magát →
-    /// alultöltés (levegő a vezetékben). Ezért ha az olvasás `enacted=true`-t ad, AZONNAL egy
-    /// MEGERŐSÍTŐ (második, teljesen friss connect-per-command) olvasást végzünk; CSAK ha az is
-    /// `enacted=true`, jelezzük késznek. Ha a megerősítés `enacted=false` (= az első gyanús/stale
-    /// volt), a priming FOLYTATÓDIK (a legrosszabb eset egy plusz fill-lépés ≈ EQUIL_STEP_FILL —
-    /// a BIZTONSÁGOS irány). Küszöb alatti olvasásnál (enacted=false) nincs mit megerősíteni.
-    /// A GATT-cache visszavonása a gyökérok-javítás (friss discovery → tiszta olvasás); ez a
-    /// megerősítés a védelem mélysége, ha máshol mégis becsúszna egy hibás keret.
+    /// SAFETY / priming-complete GUARD: do NOT accept threshold crossing (`enacted=true`)
+    /// from single resistance read. Stale/corrupt BLE frame may decode as falsely HIGH resistance
+    /// (data[6..7]), so priming could think done after FIRST step →
+    /// under-fill (air in line). So if read gives `enacted=true`, IMMEDIATELY run
+    /// CONFIRMING (second, fully fresh connect-per-command) read; ONLY if that also
+    /// `enacted=true`, signal complete. If confirm `enacted=false` (= first was suspicious/stale
+    /// ), priming CONTINUES (worst case one extra fill step ≈ EQUIL_STEP_FILL —
+    /// the SAFE direction). Below-threshold read (enacted=false) needs no confirm.
+    /// GATT cache revert is root-cause fix (fresh discovery → clean read); this
+    /// confirmation is defense in depth if bad frame slips through elsewhere.
     private func readResistanceConfirmed(completion: @escaping (CommandResult, Int) -> Void) {
         readResistanceRaw { [weak self] first, firstValue in
             guard let self else { completion(first, firstValue); return }
             guard first.success, first.enacted else {
-                // Sikertelen olvasás (auto-retry már lefutott) VAGY küszöb alatt → ahogy van.
+                // Failed read (auto-retry done) OR below threshold → as-is.
                 completion(first, firstValue)
                 return
             }
-            self.log("RESISTANCE: küszöb-átlépés gyanú (1. olvasás enacted=true, érték=\(firstValue)) — MEGERŐSÍTŐ újraolvasás")
-            // A 1. olvasás után még jöhetnek confirm-keretek — fill-recovery a workQueue-n.
+            self.log("RESISTANCE: threshold crossing suspect (1st read enacted=true, value=\(firstValue)) — CONFIRMING re-read")
+            // Confirm frames may still arrive after 1st read — fill-recovery on workQueue.
             self.workQueue.async {
-                self.recoverFillCommandOnWorkQueue(reason: "resistance confirm előtti drain")
+                self.recoverFillCommandOnWorkQueue(reason: "pre-resistance confirm drain")
                 self.readResistanceRaw { second, secondValue in
                     guard second.success else {
-                        self.log("RESISTANCE: megerősítő olvasás HIBA (\(second.errorMessage ?? "?")) — NEM kész")
+                        self.log("RESISTANCE: confirming read ERROR (\(second.errorMessage ?? "?")) — NOT complete")
                         completion(second, secondValue)
                         return
                     }
                     if second.enacted {
-                        self.log("RESISTANCE: megerősítve (2/2 enacted=true, érték=\(secondValue)) — priming KÉSZ")
+                        self.log("RESISTANCE: confirmed (2/2 enacted=true, value=\(secondValue)) — priming DONE")
                         completion(.success(enacted: true), secondValue)
                     } else {
-                        self.log("RESISTANCE: megerősítés ELMARADT (1. enacted, 2. nem, érték=\(secondValue)) — stale-gyanú, priming FOLYTATÓDIK")
+                        self.log("RESISTANCE: confirm FAILED (1st enacted, 2nd not, value=\(secondValue)) — stale suspect, priming CONTINUES")
                         completion(.success(enacted: false), secondValue)
                     }
                 }
@@ -710,7 +710,7 @@ public final class EquilCommandQueue {
         }
     }
 
-    /// Szinkron enqueue — csak workQueue-n (executeAfterPrimingCancelled után).
+    /// Synchronous enqueue — workQueue only (after executeAfterPrimingCancelled).
     private func enqueueOnWorkQueue(allowPreempt: Bool = false, _ block: @escaping () -> Void) {
         if pipelineBusy {
             if allowPreempt, commandInFlight, ble.isConnected {
@@ -784,8 +784,8 @@ public final class EquilCommandQueue {
             self.activeConnectCancel = nil
             self.ble.onReady = nil
             self.ble.onConnected = nil
-            // Priming fill-loop: MINDIG connect-per-command — bontás minden parancs után
-            // (fail-fast disconnect). A held-open session ág eltávolítva (~10,5s pump-disconnect).
+            // Priming fill-loop: ALWAYS connect-per-command — disconnect after every command
+            // (fail-fast disconnect). Held-open session path removed (~10.5s pump-disconnect).
             let wasConnected = self.ble.isConnected
             if wasConnected { self.ble.disconnect() }
             let settleDelay: TimeInterval = wasConnected
@@ -825,12 +825,12 @@ public final class EquilCommandQueue {
         // Connect-per-command: minden parancs teljes connect → flush → parancs → disconnect ciklus.
         EquilBaseCmd.resetState()
         configureScanFilter()
-        // Diagnosztikai scan (párosítás-lista) ne blokkolja a parancs-connectet.
+        // Diagnostic scan (pairing list) must not block command connect.
         ble.diagnosticOnly = false
         ble.onDiscoverDiagnostic = nil
         commandInFlight = true
-        // NOTIFY-FLUSH PROFIL: a fill-loop (fastReconnect) rövid drainnel zár (~1–2 mp/lépés),
-        // a többi parancs a konzervatív (lassú pumpa-ürülésre is hagy időt) profillal fut.
+        // NOTIFY-FLUSH PROFILE: fill-loop (fastReconnect) closes with short drain (~1–2s/step),
+        // other commands use conservative profile (allows slow pump drain time).
         ble.notifyFlushProfile = options.fastReconnect ? .fastReconnect : .conservative
         ble.pauseWatchdog()
 

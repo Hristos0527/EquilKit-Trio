@@ -10,7 +10,7 @@ final class CmdDevicesOldGet: EquilBaseSetting {
         port = "0E0E"
     }
 
-    // MARK: - 1. üzenet: fix 14-byte, TITKOSÍTÁS NÉLKÜL
+    // MARK: - 1st message: fixed 14-byte, NO ENCRYPTION
 
     override func getEquilResponse() throws -> EquilResponse {
         config = false
@@ -46,7 +46,7 @@ final class CmdDevicesOldGet: EquilBaseSetting {
         return data
     }
 
-    // MARK: - SAJÁT decodeModel (NINCS tag/iv; ciphertext = nyers byte-ok)
+    // MARK: - Custom decodeModel (NO tag/iv; ciphertext = raw bytes)
 
     override func decodeModel() -> EquilCmdModel {
         var model = EquilCmdModel()
@@ -54,8 +54,8 @@ final class CmdDevicesOldGet: EquilBaseSetting {
         guard let response = response, !response.send.isEmpty else { return model }
         for (index, bs) in response.send.enumerated() {
             if index == 0 {
-                // VÉDELEM (pumpacsere/párosítás race): csonka (stray/maradék) első keret
-                // esetén NEM indexelünk túl ([10],[11] + utolsó 2 byte) → üres modell.
+                // GUARD (pump swap/pairing race): truncated (stray/leftover) first frame
+                // → no out-of-bounds indexing ([10],[11] + last 2 bytes) → empty model.
                 guard bs.count >= 12 else { return EquilCmdModel() }
                 let codeByte = [bs[10], bs[11]]
                 list.append(bs[bs.count - 2])
@@ -72,17 +72,17 @@ final class CmdDevicesOldGet: EquilBaseSetting {
         return model
     }
 
-    // MARK: - 1. fázis lezárása: firmware-verzió + következő üzenet
+    // MARK: - Phase 1 completion: firmware version + next message
 
     func decode() throws -> EquilResponse? {
         var reqModel = decodeModel()
         let data = EquilUtils.hexStringToBytes(reqModel.ciphertext ?? "")
-        // VÉDELEM: hiányos (maradék-keretből összeállt) ciphertext esetén NE indexeljünk
-        // túl a data[12]/data[13]-on → dobunk, amit a decodeStep elkap (response-reset, vár).
+        // GUARD: incomplete ciphertext (assembled from leftover frames) → don't index
+        // past data[12]/data[13] → throw, caught by decodeStep (response reset, wait).
         guard data.count >= 14 else {
-            throw EquilError.invalidState("CmdDevicesOldGet: rövid válasz (\(data.count)B)")
+            throw EquilError.invalidState("CmdDevicesOldGet: short response (\(data.count)B)")
         }
-        // fv = data[12] + "." + data[13]  (mindkettő decimális Int)
+        // fv = data[12] + "." + data[13]  (both decimal Int)
         let fv = "\(Int(data[12])).\(Int(data[13]))"
         firmwareVersion = Float(fv) ?? 0
         reqModel.ciphertext = EquilUtils.bytesToHex(getNextData() ?? [])
@@ -90,7 +90,7 @@ final class CmdDevicesOldGet: EquilBaseSetting {
         return responseCmd(reqModel, port: "0000" + (reqModel.code ?? ""))
     }
 
-    // MARK: - 2. fázis lezárása: megerősítés
+    // MARK: - Phase 2 completion: confirmation
 
     override func decodeConfirmData(_ data: [UInt8]) {
         // fv = data[18] + "." + data[19]
@@ -99,7 +99,7 @@ final class CmdDevicesOldGet: EquilBaseSetting {
         cmdSuccess = true
     }
 
-    // MARK: - Beérkező állapotgép (BaseSetting-azonos, de saját decode())
+    // MARK: - Incoming state machine (BaseSetting-like, but custom decode())
 
     override func decodeStep() -> EquilResponse? {
         do { return try decode() }
@@ -108,23 +108,23 @@ final class CmdDevicesOldGet: EquilBaseSetting {
     }
 
     override func decodeConfirmStep() -> EquilResponse? {
-        // CmdDevicesOldGet: a 2. fázis csak megerősítés (decodeConfirmData),
-        // nincs további kimenő üzenet — a BaseSetting decodeConfirm() a
-        // decodeConfirmData()-t hívja, majd getNextData()-t küldene; itt a
-        // megerősítés a folyamat vége (cmdSuccess már true).
+        // CmdDevicesOldGet: phase 2 is confirmation only (decodeConfirmData),
+        // no further outgoing message — BaseSetting decodeConfirm() would
+        // call decodeConfirmData(), then send getNextData(); here
+        // confirmation ends the process (cmdSuccess already true).
         let model = decodeModel()
         let data = EquilUtils.hexStringToBytes(model.ciphertext ?? "")
         if data.count >= 20 { decodeConfirmData(data) } else { cmdSuccess = true }
         return nil
     }
 
-    // MARK: - Támogatottság-ellenőrzés (firmware 5.3 küszöb)
+    // MARK: - Support check (firmware 5.3 threshold)
 
-    /// LAZÍTOTT firmware-gate: MINDEN sorozatszám-prefix párosítható, ha a firmware
-    /// 1.0 FELETT van (EQUIL_SUPPORT_LEVEL = 1.0). Nincs SN-prefix alapú elutasítás.
-    /// Csak az érvénytelen / hiányzó / 1.0 alatti firmware-t utasítjuk el.
-    /// (A resistance threshold SN-prefix logikája NEM gate — az priming-kalibráció,
-    /// külön él az EquilConst.resistanceThreshold-ban; ezt nem érinti.)
+    /// RELAXED firmware gate: ANY serial-number prefix is pairable if firmware
+    /// is ABOVE 1.0 (EQUIL_SUPPORT_LEVEL = 1.0). No SN-prefix based rejection.
+    /// Only invalid / missing / sub-1.0 firmware is rejected.
+    /// (Resistance threshold SN-prefix logic is NOT a gate — it's priming calibration,
+    /// lives separately in EquilConst.resistanceThreshold; unaffected here.)
     func isSupport(serialNumber _: String) -> Bool {
         firmwareVersion >= EquilConst.EQUIL_SUPPORT_LEVEL
     }

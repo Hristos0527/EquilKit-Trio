@@ -12,7 +12,7 @@ class EquilBaseSetting: EquilBaseCmd {
         return data
     }
 
-    // MARK: - 1. üzenet: getEquilResponse (BaseSetting.getEquilResponse)
+    // MARK: - 1st message: getEquilResponse (BaseSetting.getEquilResponse)
 
     func getEquilResponse() throws -> EquilResponse {
         config = false
@@ -24,15 +24,15 @@ class EquilBaseSetting: EquilBaseCmd {
         return responseCmd(model, port: EquilBaseCmd.DEFAULT_PORT + "0000")
     }
 
-    // MARK: - 2. üzenet: decode (BaseSetting.decode)
+    // MARK: - 2nd message: decode (BaseSetting.decode)
 
-    /// A pump válaszának feldolgozása után küldi a tényleges payloadot (getFirstData).
-    /// A `respModel` a beérkezett csomagokból decodeModel()-lel állítható elő.
+    /// After processing pump response, sends actual payload (getFirstData).
+    /// `respModel` can be built from received packets via decodeModel().
     func decode() throws -> EquilResponse {
         let reqModel = decodeModel()
         let pwd = EquilUtils.hexStringToBytes(getEquilPassWord())
         let content = try AESUtil.decrypt(reqModel, key: pwd)
-        // content HEX string; substring(8) = az első 4 byte (8 hex char) levágása
+        // content HEX string; substring(8) = strip first 4 bytes (8 hex chars)
         let pwd2 = String(content.dropFirst(8))
         runPwd = pwd2
         guard let firstData = getFirstData() else {
@@ -43,7 +43,7 @@ class EquilBaseSetting: EquilBaseCmd {
         return responseCmd(model, port: port + (runCode ?? ""))
     }
 
-    // MARK: - EquilCommandDriving felülírás (minden setting-parancs az első üzenettel indul)
+    // MARK: - EquilCommandDriving override (every setting command starts with first message)
 
     override func makeFirstResponse() throws -> EquilResponse { try getEquilResponse() }
 
@@ -61,7 +61,7 @@ class EquilBaseSetting: EquilBaseCmd {
         return responseCmd(model, port: port + (runCode ?? ""))
     }
 
-    // MARK: - 3. üzenet: decodeConfirm (BaseSetting.decodeConfirm)
+    // MARK: - 3rd message: decodeConfirm (BaseSetting.decodeConfirm)
 
     func decodeConfirm() throws -> EquilResponse {
         let model = decodeModel()
@@ -76,22 +76,22 @@ class EquilBaseSetting: EquilBaseCmd {
         return responseCmd(model2, port: port + (runCode ?? ""))
     }
 
-    // MARK: - Absztrakt (alosztály felülírja)
+    // MARK: - Abstract (subclass overrides)
 
     func getFirstData() -> [UInt8]? { nil }
     func getNextData() -> [UInt8]? { nil }
     func decodeConfirmData(_: [UInt8]) {}
 
-    // MARK: - Beérkező állapotgép bekötése (EquilBaseCmd.decodeEquilPacket hívja)
+    // MARK: - Wire incoming state machine (called by EquilBaseCmd.decodeEquilPacket)
 
-    /// 1. fázis lezárása: a pump válaszából runPwd, majd getFirstData payload.
+    /// Phase 1 completion: runPwd from pump response, then getFirstData payload.
     override func decodeStep() -> EquilResponse? {
         do { return try decode() }
         catch { response = EquilResponse(createTime: createTime)
             return nil }
     }
 
-    /// 2. fázis lezárása: decodeConfirmData (siker), majd getNextData.
+    /// Phase 2 completion: decodeConfirmData (success), then getNextData.
     override func decodeConfirmStep() -> EquilResponse? {
         do { return try decodeConfirm() }
         catch { response = EquilResponse(createTime: createTime)

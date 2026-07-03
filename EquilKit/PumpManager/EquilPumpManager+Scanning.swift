@@ -34,7 +34,7 @@ public extension EquilPumpManager {
         set { objc_setAssociatedObject(self, &scanCallbackKey, newValue, .OBJC_ASSOCIATION_RETAIN) }
     }
 
-    /// Hatótávon belüli Equil pumpák listázása (SN a BLE-névből).
+    /// List in-range Equil pumps (SN from BLE name).
     func startScanning(_ onUpdate: @escaping ([ScannedPump]) -> Void) {
         var found: [ScannedPump] = []
         scanCallback = onUpdate
@@ -72,7 +72,7 @@ public extension EquilPumpManager {
         return sn.trimmingCharacters(in: .whitespaces)
     }
 
-    /// Párosítás a kiválasztott pumpával, majd auto-RUN (CmdModelSet=1).
+    /// Pair with selected pump, then auto-RUN (CmdModelSet=1).
     func startPairing(
         serialNumber: String,
         password: String,
@@ -89,24 +89,24 @@ public extension EquilPumpManager {
             return
         }
 
-        // PUMPACSERE TISZTA STATE: a párosítás ELEJÉN töröljük az ELŐZŐ pumpa credentials-ét és
-        // állapotát, hogy ha az új párosítás elakad, NE maradjon új-SN + régi-token kombináció
-        // (ez okozta a "régi credentials beragad pumpacserénél" hibát). A régi token csak siker
-        // után íródott felül korábban — most ELŐRE törlünk.
+        // PUMP SWAP CLEAN STATE: at pairing START clear PREVIOUS pump credentials and
+        // state so if new pairing stalls, no new-SN + old-token combination remains
+        // (this caused "old credentials stuck on pump swap" bug). Old token only overwritten on success
+        // previously — now we clear UP FRONT.
         state.deviceToken = ""
         state.pairingPassword = ""
-        state.pumpState = .none // priming-gate reset: ne maradjon .active/.primed az előző pumpától
+        state.pumpState = .none // priming-gate reset: don't keep .active/.primed from previous pump
         state.primeProgress = 0
-        state.activationProgress = .none // sikerkor .priming-re lép
+        state.activationProgress = .none // on success advances to .priming
         state.patchId = Data()
         state.sessionToken = Data()
-        state.peripheralUUID = nil // a régi BLE-azonosítót eldobjuk → friss scan az új SN-re
+        state.peripheralUUID = nil // drop old BLE id → fresh scan for new SN
         commandQueue.peripheralUUID = nil
-        commandQueue.bleManager.disconnect() // a régi pumpa kapcsolatát bontjuk
+        commandQueue.bleManager.disconnect() // disconnect old pump
 
         state.serialNumber = sn
         state.password = pwd
-        state.pairingPassword = pwd // CmdUnPair-hez (későbbi pumpa-felszabadításhoz)
+        state.pairingPassword = pwd // for CmdUnPair (later pump release)
         commandQueue.serialNumber = sn
         commandQueue.equilPassword = pwd
 
@@ -146,7 +146,7 @@ public extension EquilPumpManager {
                     case .success:
                         completion(.success(()))
                     case .failure:
-                        // Párosítás OK, RUN nem — a priming lépés kézi RUN-t adhat.
+                        // Pairing OK, RUN not — priming step may supply manual RUN.
                         completion(.success(()))
                     }
                 }

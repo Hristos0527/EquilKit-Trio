@@ -7,16 +7,16 @@ public extension EquilPumpManager {
     }
 
     /// Sets pump sound/vibration mode via CmdAlarmSet (persists on the pump firmware).
-    /// A FELHASZNÁLÓI beállítás (Patch Settings) ezt hívja → `persist: true`: a választott
-    /// módot tartósan elmentjük `state.alarmModeRaw`-ba (ez a user perzisztens preferenciája).
+    /// USER setting (Patch Settings) calls this → `persist: true`: chosen
+    /// mode is permanently saved to `state.alarmModeRaw` (user persistent preference).
     func setAlarmMode(_ mode: AlarmMode, completion: @escaping (Result<Void, Error>) -> Void) {
         setAlarmMode(mode, persist: true, completion: completion)
     }
 
-    /// Belső változat a `persist` kapcsolóval. Az ÁTMENETI MUTE (suspend/zero-temp idejére) ezt
-    /// `persist: false`-szal hívja: a parancsot a pumpára küldi, de a user perzisztens
-    /// alarm-beállítását (`state.alarmModeRaw`) NEM írja felül. Így a resume-nál a TÉNYLEGES,
-    /// user által választott módot tudjuk visszaállítani (nem egy átmeneti mute-ot vagy defaultot).
+    /// Internal variant with `persist` switch. TEMPORARY MUTE (during suspend/zero-temp) calls this
+    /// with `persist: false`: sends command to pump but does NOT overwrite user persistent
+    /// alarm setting (`state.alarmModeRaw`). On resume we restore the ACTUAL
+    /// user-chosen mode (not a temporary mute or default).
     func setAlarmMode(
         _ mode: AlarmMode,
         persist: Bool,
@@ -44,8 +44,8 @@ public extension EquilPumpManager {
                 return
             }
             if result.success {
-                // CSAK perzisztens kérésnél írjuk felül a user-preferenciát. Átmeneti mute-nál
-                // (persist:false) a user perzisztens módja érintetlen marad.
+                // ONLY overwrite user preference on persistent request. Temporary mute
+                // (persist:false) leaves user persistent mode untouched.
                 if persist {
                     self.state.alarmModeRaw = mode.rawValue
                     self.state.userExplicitAlarmMode = true

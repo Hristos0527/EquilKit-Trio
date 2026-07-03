@@ -611,11 +611,11 @@ struct EquilKitSettings: View {
                     Button(action: {
                         viewModel.copyEquilLogToClipboard()
                     }) {
-                        Text("Másolás vágólapra", comment: "Copy Equil debug log to clipboard")
+                        Text("Copy to clipboard", comment: "Copy Equil debug log to clipboard")
                     }
 
                     if viewModel.equilLogCopied {
-                        Text("Napló a vágólapon.", comment: "Confirmation after copying Equil log")
+                        Text("Log copied to clipboard.", comment: "Confirmation after copying Equil log")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -623,17 +623,17 @@ struct EquilKitSettings: View {
                     Button(role: .destructive, action: {
                         viewModel.clearEquilLog()
                     }) {
-                        Text("Törlés", comment: "Clear Equil in-memory debug log")
+                        Text("Clear", comment: "Clear Equil in-memory debug log")
                     }
                 }
                 .onAppear {
                     viewModel.refreshEquilLogPreview()
                 }
             } header: {
-                Text("Equil napló", comment: "Section title for copyable Equil debug log")
+                Text("Equil log", comment: "Section title for copyable Equil debug log")
             } footer: {
                 Text(
-                    "Csak Equil-események (priming, BLE, ellenállás, kapcsolat). A legutóbbi ~800 sor memóriában.",
+                    "Equil events only (priming, BLE, resistance, connection). Last ~800 lines in memory.",
                     comment: "Footer explaining Equil in-memory log buffer"
                 )
             }

@@ -265,7 +265,7 @@ extension PeripheralManager: CBPeripheralDelegate {
         queue.async {
             if characteristic.uuid.uuidString.lowercased() == CBUUID.READ_UUID.uuidString.lowercased() {
                 guard data.count >= 2 else {
-                    // Túl rövid notification, nincs mit feldolgozni (index-trap védelem)
+                    // Too short notification, nothing to process (index-trap guard)
                     return
                 }
                 guard data[1] != 0x00 else {

@@ -65,6 +65,12 @@ Reference fork: integrate alongside existing pump plugins (OmnipodKit, MedtrumKi
 
 See **[CHANGELOG.md](CHANGELOG.md)**.
 
+## Publishing / community announcement
+
+- **[WHERE_TO_CLICK.md](WHERE_TO_CLICK.md)** — 5 manual steps (GitHub Issue, Discord)
+- **[PUBLISH.md](PUBLISH.md)** — full publishing guide with URLs
+- **[ISSUE_BODY_READY.md](ISSUE_BODY_READY.md)** — copy-paste issue text
+
 ## License
 
 [AGPL-3.0](LICENSE) — consistent with LoopKit / Trio.

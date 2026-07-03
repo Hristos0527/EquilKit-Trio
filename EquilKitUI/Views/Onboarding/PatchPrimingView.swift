@@ -78,9 +78,9 @@ struct PatchPrimingView: View {
             .buttonStyle(ActionButtonStyle())
             .padding([.bottom, .horizontal])
 
-            // STOP/CANCEL: csak priming közben látszik. Leállítja a fill-loopot és felszabadítja
-            // a parancs-queue-t, hogy a Delete Pump / deactivate AZONNAL átmenjen (elakadt priming
-            // esetén is). A connect-per-command queue-t a `cancelPriming()` üríti.
+            // STOP/CANCEL: visible only during priming. Stops fill-loop and frees
+            // command queue so Delete Pump / deactivate proceeds IMMEDIATELY (stuck priming
+            // included). connect-per-command queue drained by `cancelPriming()`.
             if viewModel.isPriming {
                 Button(action: { viewModel.cancelPriming() }) {
                     Text("Stop priming", comment: "label for prime stop/cancel action")

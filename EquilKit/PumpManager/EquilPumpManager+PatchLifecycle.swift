@@ -105,15 +105,15 @@ extension EquilPumpManager {
         commandQueue.bleManager.disconnect()
     }
 
-    /// Pumpa eltávolítás / unpair KÖTELEZŐ sorrendje:
-    ///   1) Retract Plunger (`CmdInsulinChange`) — a dugattyúrúd visszahúzása,
-    ///   2) Stop (`CmdModelSet` stop) — adagolás leállítása a pumpán (a `deactivatePatch` küldi),
-    ///   3) Unpair/forget — state törlés + BLE bontás (a `deactivatePatch` reset-je; a Trio-oldali
-    ///      "forget" a hívó completionjében történik).
+    /// Pump removal / unpair REQUIRED sequence:
+    ///   1) Retract Plunger (`CmdInsulinChange`) — retract plunger rod,
+    ///   2) Stop (`CmdModelSet` stop) — stop delivery on pump (`deactivatePatch` sends),
+    ///   3) Unpair/forget — state clear + BLE disconnect (`deactivatePatch` reset; Trio-side
+    ///      "forget" in caller completion).
     ///
-    /// A retract és a stop SIKERESEN lefut (vagy hibakezelés) MIELŐTT az unpair megtörténik.
-    /// A retract/stop hibája nem hagyja félállapotban a pumpát: a state törlés + bontás
-    /// minden esetben megtörténik (forceDeactivatePatch fallback), a hibát a completion jelzi.
+    /// Retract and stop complete successfully (or error handling) BEFORE unpair.
+    /// Retract/stop failure doesn't leave pump half-state: state clear + disconnect
+    /// always happens (forceDeactivatePatch fallback), completion reports error.
     func unpairPatchWithSafeSequence(completion: @escaping (Error?) -> Void) {
         syncCommandQueueCredentials()
         commandQueue.bleManager.diagnosticOnly = false
@@ -133,7 +133,7 @@ extension EquilPumpManager {
                 ]))
                 return
             }
-            // 1) Retract Plunger — a dugattyú visszahúzása MIELŐTT bármi mást teszünk.
+            // 1) Retract Plunger — retract plunger BEFORE anything else.
             self.commandQueue.executeCmdOnWorkQueue({
                 CmdInsulinChange(
                     createTime: Int64(Date().timeIntervalSince1970 * 1000),
@@ -155,7 +155,7 @@ extension EquilPumpManager {
                     self.notifyStateDidChange()
                 }
 
-                // 2) Stop (CmdModelSet stop) — adagolás leállítása, MÉG él a kapcsolat és a credentials.
+                // 2) Stop (CmdModelSet stop) — stop delivery while connection and credentials still live.
                 self.commandQueue.executeCmdOnWorkQueue({
                     CmdModelSet(
                         mode: RunMode.stop.rawValue,
@@ -164,7 +164,7 @@ extension EquilPumpManager {
                         equilPassword: self.state.password
                     )
                 }) { stopResult in
-                    // 3) Unpair (CmdUnPair) — a RÉGI pumpa felszabadítása MIELŐTT a state-et töröljük
+                    // 3) Unpair (CmdUnPair) — release OLD pump BEFORE clearing state
                     self.sendUnpairCommandTolerantOnWorkQueue {
                         self.resetPatchStateAfterDeactivation()
                         self.clearPairingCredentials()
@@ -187,7 +187,7 @@ extension EquilPumpManager {
         }
     }
 
-    /// CmdUnPair elküldése a régi pumpának (HIBATŰRŐ). Standalone hívásokhoz (nem unpair-lánc).
+    /// Send CmdUnPair to old pump (FAULT-TOLERANT). Standalone calls (not unpair chain).
     private func sendUnpairCommandTolerant(_ completion: @escaping () -> Void) {
         let sn = state.serialNumber
         let pairPwd = state.pairingPassword
@@ -208,7 +208,7 @@ extension EquilPumpManager {
         }
     }
 
-    /// CmdUnPair a workQueue-n (unpair lánc atomi takeover után).
+    /// CmdUnPair on workQueue (after unpair chain atomic takeover).
     private func sendUnpairCommandTolerantOnWorkQueue(_ completion: @escaping () -> Void) {
         let sn = state.serialNumber
         let pairPwd = state.pairingPassword
@@ -216,7 +216,7 @@ extension EquilPumpManager {
             completion()
             return
         }
-        // A megfelelő pumpára irányítjuk a connect-per-command scan/reconnect-et.
+        // Route connect-per-command scan/reconnect to correct pump.
         commandQueue.serialNumber = sn
         commandQueue.peripheralUUID = state.peripheralUUID
         commandQueue.executeCmdOnWorkQueue({
@@ -230,9 +230,9 @@ extension EquilPumpManager {
         }
     }
 
-    /// A párosítási credentials törlése (unpair / pumpacsere): token + jelszavak + peripheral,
-    /// hogy a régi pumpa adatai NE ragadjanak be (ÚJ párosítás kelljen). A serialNumber-t a
-    /// "forget" UI-folyam kezeli; itt a kapcsolat-azonosítót és a titkokat töröljük.
+    /// Clear pairing credentials (unpair / pump swap): token + passwords + peripheral,
+    /// so old pump data doesn't stick (NEW pairing required). serialNumber handled by
+    /// "forget" UI flow; here we clear connection id and secrets.
     private func clearPairingCredentials() {
         state.deviceToken = ""
         state.password = ""

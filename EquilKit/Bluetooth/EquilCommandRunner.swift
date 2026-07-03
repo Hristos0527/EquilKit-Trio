@@ -31,35 +31,35 @@ public final class EquilCommandRunner {
     /// Forwarded log line (BLE + protocol). Wire to UI/os_log.
     var onLog: ((String) -> Void)?
 
-    /// Párosításkor: a felfedezett (valódi) eszköznévből újraépíti a CmdPair-t,
-    /// mert a sorozatszám (sn) a névből származik. Ha nil, a megadott parancs marad.
+    /// During pairing: rebuilds CmdPair from discovered (actual) device name,
+    /// because serial number (sn) comes from name. If nil, supplied command stays.
     var pendingPairFactory: ((_ discoveredName: String) -> EquilCommandDriving)?
-    /// A legutóbb futtatott CmdPair (a kialkudott device/password kiolvasásához).
+    /// Last run CmdPair (to read negotiated device/password).
     private(set) var lastPairCommand: CmdPair?
 
-    // MARK: - Többlépéses párosítási flow állapot (AAPS EquilPairSerialNumberFragment)
+    // MARK: - Multi-step pairing flow state (AAPS EquilPairSerialNumberFragment)
 
-    /// A felfedezett pump neve+címe (a SN-szűrt scan eredménye).
+    /// Discovered pump name+address (SN-filtered scan result).
     private var pairDiscoveredName: String?
     private var pairDiscoveredAddress: String?
-    /// A párosítási lépéseket előállító closure-ök (sorrendben).
-    /// Mindegyik a felfedezett (name,address) ismeretében épít parancsot, és a
-    /// `step(after:)` callback dönti el, lép-e tovább (a parancs eredménye alapján).
+    /// Closures producing pairing steps (in order).
+    /// Each builds a command from discovered (name,address), and the
+    /// `step(after:)` callback decides whether to advance (based on command result).
     private var pairPipeline: [(_ name: String, _ address: String) -> EquilCommandDriving]?
     private var pairStepIndex = 0
-    /// A párosítási flow paraméterei.
+    /// Pairing flow parameters.
     private var pairSerialNumber: String?
     private var pairPassword: String?
     private var pairMaxBolus: Double = 0
     private var pairMaxBasal: Double = 0
-    /// A frissen párosított device/password (CmdPair-ből).
+    /// Freshly paired device/password (from CmdPair).
     private(set) var pairedDevice: String?
     private(set) var pairedPassword: String?
     /// Pump base firmware from CmdDevicesOldGet (pairing step 1).
     private(set) var pairFirmwareVersion: String = ""
-    /// A teljes párosítási flow lezárása.
+    /// Full pairing flow completion.
     private var pairCompletion: ((Outcome) -> Void)?
-    /// Igaz, amíg a többlépéses párosítás fut (a single-command finish ezt nem zárja le).
+    /// true while multi-step pairing runs (single-command finish does not clear this).
     private var pairingActive = false
 
     public init(ble: EquilBLEManager) {
@@ -74,29 +74,29 @@ public final class EquilCommandRunner {
         ble.onDisconnected = { [weak self] err in
             guard let self else { return }
             self.log("[BLE] disconnected: \(err?.localizedDescription ?? "clean")")
-            // FAIL-FAST: VÁRATLAN drop (err != nil, pl. "The specified device has disconnected
-            // from us") AKTÍV parancs közben → azonnal hiba, NE várjuk ki a 30s command-timeoutot.
-            // A SZÁNDÉKOS bontás (connect-per-command vége / reconnect előtti cancel) err == nil
-            // ("clean") ÉS ilyenkor a parancs már befejeződött (finished==true, command==nil),
-            // ezért az NEM fail-fast-ol. A 30s timeout végső védőhálóként megmarad (ha nincs
-            // disconnect esemény ÉS nincs válasz). A fail-fast hibát a fill-loop auto-retry kapja el
-            // (300ms+ backoff reconnect+resend) → drop esetén ~1–2s recovery, nem 30s stall.
+            // FAIL-FAST: UNEXPECTED drop (err != nil, e.g. "The specified device has disconnected
+            // from us") during ACTIVE command → fail immediately, do NOT wait 30s command-timeout.
+            // INTENTIONAL disconnect (connect-per-command end / pre-reconnect cancel) err == nil
+            // ("clean") AND command already finished (finished==true, command==nil),
+            // so it does NOT fail-fast. 30s timeout remains final safety net (if no
+            // disconnect event AND no response). fill-loop auto-retry catches fail-fast error
+            // (300ms+ backoff reconnect+resend) → ~1–2s recovery on drop, not 30s stall.
             if err != nil, !self.finished, self.command != nil || self.pairingActive {
-                self.log("[BLE] váratlan disconnect aktív parancs közben → fail-fast (azonnali retry)")
+                self.log("[BLE] unexpected disconnect during active command → fail-fast (immediate retry)")
                 self.finish(.failure("pump disconnected mid-command"))
             }
         }
         ble.onDiscover = { [weak self] peripheral, name in
             guard let self else { return }
             self.log("[BLE] discovered \(name) — connecting")
-            // Többlépéses párosítás: rögzítjük a felfedezett nevet+címet (a pipeline
-            // ezekből építi a parancsokat). A cím iOS-en a peripheral UUID-ja —
-            // ez csak kapcsolat-azonosító, NEM kerül a titkosított payloadba.
+            // Multi-step pairing: record discovered name+address (pipeline
+            // builds commands from these). On iOS address is peripheral UUID —
+            // connection id only, NOT in encrypted payload.
             if self.pairingActive {
                 self.pairDiscoveredName = name
                 self.pairDiscoveredAddress = peripheral.identifier.uuidString
             }
-            // Egyparancsos párosítás (régi út): a valódi névből újraépítjük a CmdPair-t.
+            // Single-command pairing (legacy): rebuild CmdPair from actual name.
             if let factory = self.pendingPairFactory {
                 let rebuilt = factory(name)
                 self.command = rebuilt
@@ -109,8 +109,8 @@ public final class EquilCommandRunner {
 
     /// Run one command sequence. `timeout` defaults to EQUIL_CMD_TIME_OUT-ish (sane 30s).
     ///
-    /// `resetIndices`: alapból igaz (connect-per-command: friss kapcsolat → friss indexek).
-    /// A priming fill-loop mindig true-t használ; a párosítási flow saját index-kezeléssel fut.
+    /// `resetIndices`: default true (connect-per-command: fresh connection → fresh indices).
+    /// Priming fill-loop always uses true; pairing flow has its own index handling.
     func run(
         command: EquilCommandDriving,
         timeout: TimeInterval = 30,
@@ -118,17 +118,17 @@ public final class EquilCommandRunner {
         completion: @escaping (Outcome) -> Void
     ) {
         if resetIndices {
-            EquilBaseCmd.resetState() // reqIndex/pumpReqIndex/rspIndex → kezdőérték
+            EquilBaseCmd.resetState() // reqIndex/pumpReqIndex/rspIndex → initial values
         }
         self.command = command
         self.completion = completion
         finished = false
         if let pair = command as? CmdPair { lastPairCommand = pair }
-        // A log a tényleges útvonalat jelzi. Connect-per-command: friss connect+ready UTÁN
-        // `ble.isConnected` igaz, de `resetIndices` mindig true (friss indexek minden parancsnál).
+        // Log shows actual path. Connect-per-command: after fresh connect+ready
+        // `ble.isConnected` true, but `resetIndices` always true (fresh indices every command).
         let connectionLabel: String
         if ble.isConnected {
-            connectionLabel = "friss kapcsolat (connect-per-command, scan nélkül)"
+            connectionLabel = "fresh connection (connect-per-command, no scan)"
         } else {
             connectionLabel = "scanning"
         }
@@ -142,7 +142,7 @@ public final class EquilCommandRunner {
         DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: work)
 
         if heldOpen {
-            handleReady() // már kapcsolódva: egyből küldjük az 1. üzenetet
+            handleReady() // already connected: send 1st message immediately
         } else {
             ble.startScan()
         }
@@ -151,8 +151,8 @@ public final class EquilCommandRunner {
     // MARK: - BLE event handlers
 
     private func handleReady() {
-        // A CCCD engedélyezése (onReady) EGYSZER történik a kapcsolat után.
-        // Többlépéses párosításnál ekkor indítjuk az ELSŐ lépést (CmdDevicesOldGet).
+        // CCCD enable (onReady) happens ONCE after connection.
+        // Multi-step pairing starts FIRST step here (CmdDevicesOldGet).
         if pairingActive, command == nil {
             startPairStep()
             return
@@ -160,7 +160,7 @@ public final class EquilCommandRunner {
         guard let command else { return }
         do {
             let resp = try command.firstResponse()
-            log("→ küldés: \(resp.send.count) csomag (1. üzenet)")
+            log("→ send: \(resp.send.count) packet(s) (1st message)")
             ble.send(packets: resp.send.map { Data($0) })
         } catch {
             finishCommand(.failure("firstResponse error: \(error)"))
@@ -170,7 +170,7 @@ public final class EquilCommandRunner {
     private func handleNotify(_ frame: Data) {
         guard let command, !finished else { return }
         let bytes = [UInt8](frame)
-        let next = command.decodeEquilPacket(bytes) // állapotgép
+        let next = command.decodeEquilPacket(bytes) // state machine
 
         if command.cmdSuccess {
             log("✓ cmdSuccess (enacted=\(command.enacted))")
@@ -178,24 +178,24 @@ public final class EquilCommandRunner {
             return
         }
         if let next, !next.send.isEmpty {
-            log("→ küldés: \(next.send.count) csomag (következő üzenet)")
+            log("→ send: \(next.send.count) packet(s) (next message)")
             ble.send(packets: next.send.map { Data($0) })
         }
-        // ha next == nil és nincs cmdSuccess: még gyűlnek a csomagok, várunk
+        // if next == nil and no cmdSuccess: still collecting packets, waiting
     }
 
-    /// KÜLSŐ MEGSZAKÍTÁS (priming Stop/Cancel, deactivate force-takeover): a folyamatban lévő
-    /// parancsot AZONNAL hibára futtatja, hogy a hívó (queue) felszabadulhasson és új parancs
-    /// mehessen át. Ha nincs aktív parancs, no-op. A `finish` a normál completion-láncot futtatja
-    /// (timeout cancel + completion), így a pipeline tisztán felszabadul.
+    /// EXTERNAL ABORT (priming Stop/Cancel, deactivate force-takeover): immediately fails
+    /// in-flight command so caller (queue) can free up and new command
+    /// can proceed. No-op if no active command. `finish` runs normal completion chain
+    /// (timeout cancel + completion), so pipeline frees cleanly.
     func abort() {
         guard !finished, command != nil || pairingActive else { return }
-        log("PARANCS MEGSZAKÍTVA (abort) — külső cancel")
+        log("COMMAND ABORTED (abort) — external cancel")
         finish(.failure("cancelled"))
     }
 
-    /// Egy parancs (lépés) befejeződött. Többlépéses párosításnál a pipeline-t lépteti,
-    /// egyparancsos futtatásnál a teljes flow-t zárja (finish).
+    /// One command (step) finished. Multi-step pairing advances pipeline,
+    /// single-command run closes full flow (finish).
     private func finishCommand(_ outcome: Outcome) {
         if pairingActive {
             advancePairing(after: outcome)
@@ -210,10 +210,10 @@ public final class EquilCommandRunner {
         timeoutWork?.cancel()
         timeoutWork = nil
         switch outcome {
-        case let .success(enacted): log("BEFEJEZVE: siker (enacted=\(enacted))")
-        case let .failure(msg): log("BEFEJEZVE: hiba — \(msg)")
+        case let .success(enacted): log("DONE: success (enacted=\(enacted))")
+        case let .failure(msg): log("DONE: error — \(msg)")
         }
-        // Többlépéses párosítás lezárása (pl. időtúllépés a teljes flow-ra).
+        // Multi-step pairing completion (e.g. full flow timeout).
         let pairCb = pairCompletion
         let singleCb = completion
         resetPairingState()
@@ -236,17 +236,17 @@ public final class EquilCommandRunner {
 
     private func log(_ msg: String) { onLog?(msg) }
 
-    // MARK: - Többlépéses párosítási flow (AAPS EquilPairSerialNumberFragment-hű)
+    // MARK: - Multi-step pairing flow (AAPS EquilPairSerialNumberFragment-compatible)
 
     //
-    //  Sorrend (mind a SAME BLE-kapcsolaton, EGY resetState()-tel az elején):
-    //    0) SN-szűrt scan (name.contains(serialNumber)) → connect → CCCD ready
-    //    1) CmdDevicesOldGet(address) → siker && isSupport(SN) → vár 500 ms
-    //    2) CmdPair(name, address, password) → siker && enacted → vár 500 ms
-    //    3) CmdSettingSet(maxBolus, maxBasal) → siker → device/SN mentés
+    //  Order (all on SAME BLE connection, ONE resetState() at start):
+    //    0) SN-filtered scan (name.contains(serialNumber)) → connect → CCCD ready
+    //    1) CmdDevicesOldGet(address) → success && isSupport(SN) → wait 500 ms
+    //    2) CmdPair(name, address, password) → success && enacted → wait 500 ms
+    //    3) CmdSettingSet(maxBolus, maxBasal) → success → save device/SN
     //
-    //  A pumpReqIndex/reqIndex/rspIndex statikus és a teljes flow alatt FOLYAMATOSAN
-    //  nő — ezért resetState() csak EGYSZER, a flow elején.
+    //  pumpReqIndex/reqIndex/rspIndex are static and CONTINUOUSLY increment
+    //  throughout flow — so resetState() only ONCE at flow start.
     func runPairing(
         serialNumber: String,
         password: String,
@@ -270,18 +270,18 @@ public final class EquilCommandRunner {
 
         let now: () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }
         pairPipeline = [
-            // 1) CmdDevicesOldGet — firmware lekérdezés
+            // 1) CmdDevicesOldGet — firmware query
             { _, address in
                 CmdDevicesOldGet(address: address, createTime: now())
             },
-            // 2) CmdPair — a sn a felfedezett NÉVBŐL származik
+            // 2) CmdPair — sn comes from discovered NAME
             { [weak self] name, address in
                 let pwd = self?.pairPassword ?? password
                 let cmd = CmdPair(name: name, address: address, pairPassword: pwd, createTime: now())
                 self?.lastPairCommand = cmd
                 return cmd
             },
-            // 3) CmdSettingSet — a CmdPair-ből kialkudott device/password-del
+            // 3) CmdSettingSet — with negotiated device/password from CmdPair
             { [weak self] _, _ in
                 let dev = self?.pairedDevice ?? ""
                 let pw = self?.pairedPassword ?? ""
@@ -295,7 +295,7 @@ public final class EquilCommandRunner {
             }
         ]
 
-        log("=== PÁROSÍTÁS (4 lépés) START — SN=\(serialNumber) ===")
+        log("=== PAIRING (4 steps) START — SN=\(serialNumber) ===")
 
         let work = DispatchWorkItem { [weak self] in
             self?.finish(.failure("pairing timeout (\(Int(timeout))s)"))
@@ -311,7 +311,7 @@ public final class EquilCommandRunner {
         }
     }
 
-    /// Elindítja az aktuális párosítási lépést (parancs építés + 1. üzenet küldés).
+    /// Starts current pairing step (build command + send 1st message).
     private func startPairStep() {
         guard let pipeline = pairPipeline, pairStepIndex < pipeline.count else {
             finishPairingSuccess()
@@ -321,17 +321,17 @@ public final class EquilCommandRunner {
         let address = pairDiscoveredAddress ?? ""
         let cmd = pipeline[pairStepIndex](name, address)
         command = cmd
-        log("—— Párosítási lépés \(pairStepIndex + 1)/\(pipeline.count): \(cmd.label) ——")
+        log("—— Pairing step \(pairStepIndex + 1)/\(pipeline.count): \(cmd.label) ——")
         do {
             let resp = try cmd.firstResponse()
-            log("→ küldés: \(resp.send.count) csomag (lépés 1. üzenet)")
+            log("→ send: \(resp.send.count) packet(s) (step 1st message)")
             ble.send(packets: resp.send.map { Data($0) })
         } catch {
             finish(.failure("step \(pairStepIndex + 1) firstResponse error: \(error)"))
         }
     }
 
-    /// Egy párosítási lépés befejeződött — döntés a továbblépésről (AAPS gating).
+    /// Pairing step finished — advance decision (AAPS gating).
     private func advancePairing(after outcome: Outcome) {
         guard pairingActive else { return }
         let finishedCmd = command
@@ -350,7 +350,7 @@ public final class EquilCommandRunner {
                 return
             }
             pairFirmwareVersion = String(format: "%.1f", dev.firmwareVersion)
-            log("firmware=\(pairFirmwareVersion) — támogatott")
+            log("firmware=\(pairFirmwareVersion) — supported")
         case let pair as CmdPair:
             if !enacted {
                 finish(.failure("pairing rejected (wrong password or already paired)"))
@@ -360,7 +360,7 @@ public final class EquilCommandRunner {
             pairedPassword = pair.newPassword
             log("CmdPair OK — device=\(pair.newDevice ?? "?") password=\(pair.newPassword ?? "?")")
         default:
-            break // CmdSettingSet: csak siker kell
+            break // CmdSettingSet: success only
         }
 
         pairStepIndex += 1
@@ -370,14 +370,14 @@ public final class EquilCommandRunner {
         }
 
         let delayMs = Int(EquilConst.EQUIL_BLE_NEXT_CMD)
-        log("várakozás \(delayMs) ms a következő lépés előtt")
+        log("waiting \(delayMs) ms before next step")
         DispatchQueue.global().asyncAfter(deadline: .now() + .milliseconds(delayMs)) { [weak self] in
             self?.startPairStep()
         }
     }
 
     private func finishPairingSuccess() {
-        log("=== PÁROSÍTÁS KÉSZ — device/SN menthető ===")
+        log("=== PAIRING DONE — device/SN can be saved ===")
         finish(.success(enacted: true))
     }
 }

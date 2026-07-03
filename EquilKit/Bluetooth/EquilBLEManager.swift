@@ -29,7 +29,7 @@ public final class EquilBLEManager: NSObject {
     private let queue = DispatchQueue(label: "equil.ble")
     private var central: CBCentralManager!
     private var peripheral: CBPeripheral?
-    /// A jelenleg kapcsolódott/cél peripheral (watchdog megtartáshoz). nil ha nincs.
+    /// Currently connected/target peripheral (for watchdog retention). nil if none.
     var currentPeripheral: CBPeripheral? { peripheral }
     private var uartChar: CBCharacteristic?
 
@@ -49,12 +49,12 @@ public final class EquilBLEManager: NSObject {
 
     private(set) var isConnected = false
 
-    // MARK: - BT Watchdog (állandó kapcsolat-tartás + auto force-reconnect)
+    // MARK: - BT Watchdog (persistent connection keepalive + auto force-reconnect)
 
-    /// Ha igaz, a kapcsolat megszakadásakor azonnal újraépítjük (iOS reconnect, scan nélkül).
+    /// If true, rebuild immediately on disconnect (iOS reconnect, no scan).
     var watchdogEnabled = false
-    /// Ha igaz, a watchdog auto-reconnect FEL VAN FÜGGESZTVE (parancs-futtatás alatt),
-    /// hogy ne versenyezzen a connect-per-command kapcsolatépítéssel (AAPS-modell).
+    /// If true, watchdog auto-reconnect is SUSPENDED (during command execution),
+    /// so it doesn't race connect-per-command connection setup (AAPS model).
     var watchdogPaused = false
     private var watchdogPeripheralID: UUID?
     private var watchdogTimer: DispatchSourceTimer?
@@ -64,12 +64,12 @@ public final class EquilBLEManager: NSObject {
     var onLog: ((String) -> Void)?
     var onStateChange: ((CBManagerState) -> Void)?
     var onDiscover: ((CBPeripheral, String) -> Void)? // peripheral, name (runner connect-handler)
-    /// KÜLÖN diagnosztikai felfedezés-callback (csak listázás, NEM csatlakozik).
-    /// A model startScan()-je ezt állítja be, hogy NE írja felül a runner connect-handlerét
-    /// (onDiscover), különben a párosítás scan-je felfedez, de sosem csatlakozik.
+    /// SEPARATE diagnostic discovery callback (list only, does NOT connect).
+    /// Model startScan() sets this so it does NOT override runner connect handler
+    /// (onDiscover), otherwise pairing scan discovers but never connects.
     var onDiscoverDiagnostic: ((CBPeripheral, String) -> Void)?
-    /// Ha igaz, a felfedezésnél CSAK az onDiscoverDiagnostic fut (a runner connect-handlere
-    /// szünetel). A diagnosztikai scan kapcsolja be, a párosítás/parancs kikapcsolja.
+    /// If true, on discovery ONLY onDiscoverDiagnostic runs (runner connect handler
+    /// paused). Diagnostic scan enables it, pairing/command disables it.
     var diagnosticOnly = false
     var onConnected: (() -> Void)?
     var onDisconnected: ((Error?) -> Void)?
@@ -79,25 +79,25 @@ public final class EquilBLEManager: NSObject {
     var onNotify: ((Data) -> Void)?
 
     /// NOTIFY-FLUSH ABLAK: a connect-per-command miatt minden parancs friss
-    /// kapcsolaton fut. Az ELŐZŐ parancs utolsó notify-keretei azonban a pumpa
-    /// pufferéből átszivároghatnak az ÚJ kapcsolat "notifications enabled -> ready"
-    /// eseménye UTÁNRA, és az új parancs első dekódolásánál jelennek meg → ct.len=0B
-    /// → Msg1 elveszik → a pumpa a confirm-keretet ismételgeti időtúllépésig
-    /// ("temp basal set sem megy", "tartály hiba"). Megoldás: a CCCD engedélyezése
-    /// után rövid CSENDESEDÉSI ablakot tartunk; ez alatt a beérkező (maradék) notify
-    /// kereteket ELDOBJUK, és csak az ablak végén jelzünk onReady-t (az első write
-    /// csak ekkor indul). Így az új parancs tiszta notify-csatornán kezd.
+    /// connection. However PREVIOUS command's last notify frames can leak from pump
+    /// buffer into NEW connection "notifications enabled -> ready"
+    /// event AFTER, appearing at new command's first decode → ct.len=0B
+    /// → Msg1 lost → pump repeats confirm frame until timeout
+    /// ("temp basal set fails", "reservoir error"). Fix: after CCCD enable
+    /// hold short QUIESCENCE window; discard incoming (leftover) notify
+    /// frames, signal onReady only at window end (first write
+    /// starts then). New command begins on clean notify channel.
     private var notifyFlushDeadline: Date?
-    /// A connect-per-command notify-flush PROFILJA. A három időkonstanst (window / idle-gap /
-    /// max-window) innen olvassuk, hogy parancsfajtánként váltható legyen:
-    ///  - `.conservative`: bolus/temp/model — lassú pumpa-ürülésre is hagy időt (régi 0,4/0,3/2,0s).
-    ///  - `.fastReconnect`: priming fill-loop — a felesleges 2,0s-os max-window-t levágja, DE a
-    ///    notify-ablakot NEM viszi 0,5 s ALÁ. A pumpa a StepSet után ~390 ms-enként ismétli a
-    ///    confirm-kereteket; ha a következő (Resistance/StepSet) parancs flush-ablaka <0,5 s, stale-
-    ///    frame szivárog be → hibás dekódolás/timeout/crash (ezt láttuk a held-opennél). Ezért a
-    ///    window-floor (a kvázi-idle minimum) = 0,5 s, a max-window 0,6 s (≥0,5 s, de << 2,0 s).
-    ///    Motor/nyomás settle NEM kell (AAPS=0 ms, a resistance pillanatnyi érték).
-    /// A profilt a `EquilCommandQueue.runSingleCommand` állítja be a connect ELŐTT.
+    /// connect-per-command notify-flush PROFILE. Three time constants (window / idle-gap /
+    /// max-window) read here for per-command-type switching:
+    ///  - `.conservative`: bolus/temp/model — allows slow pump drain time (legacy 0.4/0.3/2.0s).
+    ///  - `.fastReconnect`: priming fill-loop — cuts excess 2.0s max-window, BUT
+    ///    does NOT take notify window below 0.5s. Pump repeats confirm frames ~390ms after StepSet;
+    ///    if next (Resistance/StepSet) flush window <0.5s, stale
+    ///    frames leak → bad decode/timeout/crash (seen with held-open). So
+    ///    window-floor (quasi-idle minimum) = 0.5s, max-window 0.6s (≥0.5s but << 2.0s).
+    ///    Motor/pressure settle NOT needed (AAPS=0ms, resistance is instantaneous).
+    /// Profile set by `EquilCommandQueue.runSingleCommand` BEFORE connect.
     public struct NotifyFlushProfile {
         public let window: TimeInterval
         public let idleGap: TimeInterval
@@ -109,70 +109,70 @@ public final class EquilBLEManager: NSObject {
         }
 
         public static let conservative = NotifyFlushProfile(window: 0.4, idleGap: 0.30, maxWindow: 2.0)
-        /// FILL-loop FRISS connect-per-command kapcsolat: a felesleges 2,0s-os max-window-t levágja,
-        /// DE a notify-ablakot NEM viszi a BIZTONSÁGOS 0,5 s ALÁ. A pumpa a StepSet után
-        /// ~390 ms-enként ismétli a confirm-kereteket; ha a következő (Resistance/StepSet) parancs
-        /// flush-ablaka <0,5 s, stale-frame szivárog be → hibás dekódolás/timeout/crash. A GATT-cache
-        /// optimalizálással együtt 0,3 s-ra csökkentett ablakot VISSZAÁLLÍTJUK a korábbi biztonságos
-        /// értékre: window 0,5 s, max-window 0,6 s. A stabilitás a cél (lépés-idő ~2,85 mp/parancs, OK).
+        /// FILL-loop FRESH connect-per-command: cuts excess 2.0s max-window,
+        /// BUT does NOT take notify window below SAFE 0.5s. After StepSet pump
+        /// repeats confirm frames every ~390ms; if next (Resistance/StepSet) command
+        /// flush window <0.5s, stale frames leak → bad decode/timeout/crash. GATT-cache
+        /// optimization had reduced window to 0.3s — RESTORED to prior safe
+        /// values: window 0.5s, max-window 0.6s. Stability is goal (~2.85s/step/command, OK).
         public static let fastReconnect = NotifyFlushProfile(window: 0.5, idleGap: 0.30, maxWindow: 0.6)
     }
 
     public var notifyFlushProfile: NotifyFlushProfile = .conservative
 
-    /// A csendesedési ablak hossza (a profilból). A pumpa ismétlési ütemét és a writeGap-et
-    /// figyelembe véve elegendő a maradék kiürülésére; fill-loopban rövidebb (fastReconnect).
+    /// Quiescence window length (from profile). Pump repeat rate and writeGap
+    /// considered sufficient for leftover drain; shorter in fill-loop (fastReconnect).
     private var notifyFlushWindow: TimeInterval { notifyFlushProfile.window }
-    /// Igaz a connect pillanatától a window lejártáig. Amíg igaz, MINDEN bejövő
-    /// notify-keretet eldobunk (a ready esemény ELŐTT érkező maradékot is).
+    /// true from connect until window expires. While true, ALL incoming
+    /// notify frames discarded (leftover arriving BEFORE ready too).
     private var notifyFlushActive: Bool = false
-    /// Token a flush-ablak lezárásához: ha közben ÚJ flush indul, a régi async-záró
-    /// nem oldódik ki (megakadályozza a korai ready-t reconnect esetén).
+    /// Token for flush window close: if NEW flush starts meanwhile, old async close
+    /// doesn't fire (prevents early ready on reconnect).
     private var notifyFlushToken: UUID?
-    /// IDLE-ZÁRÁS: a fix 400ms-os ablak éppen lejárhat, mielőtt a pumpa utolsó
-    /// ismételt maradék-keretét (a ~390ms-os ismétlési ciklusból) megkapnánk, így az
-    /// becsúszik a ready UTÁNra és elrontísa az új parancs első dekódolását (ct.len=7B
-    /// → a confirm-keret végtelen ismétlődése időtúllépésig: "karikázás", "nincs aktív
-    /// temp"). Megoldás: a ready-t NEM fix időre jelezzük, hanem AKKOR, ha a notify-
-    /// csatorna ténylegesen elcsendesedett — minden beérkező (eldobott) maradék-keret
-    /// ÚJRAINDÍTJA ezt a csendes-időzítőt. A teljes flush-ablak felső korlátja
-    /// notifyFlushMaxWindow (hogy néma pumpa esetén se akadjunk el).
+    /// IDLE-CLOSE: fixed 400ms window may expire before pump's last
+    /// repeated leftover frame (~390ms repeat cycle), so it
+    /// slips in AFTER ready and breaks new command's first decode (ct.len=7B
+    /// → confirm frame repeats until timeout: "spinning", "no active
+    /// temp"). Fix: signal ready NOT at fixed time, but WHEN notify
+    /// channel actually quiesced — every incoming (discarded) leftover frame
+    /// RESTARTS this idle timer. Full flush window upper bound
+    /// notifyFlushMaxWindow (so silent pump doesn't hang us).
     private var notifyFlushIdleGap: TimeInterval { notifyFlushProfile.idleGap }
-    /// A flush-ablak abszolút felső korlátja (akkor is zár, ha sose csendesedik el).
-    /// Konzervatív profilban 2.0s: a CmdModelSet (futási mód, mode=1) UTÁN a pumpa lassabban
-    /// üríti a notify-pufferét, a kisebb hard-deadline a max-window-on zárhatott, MIELŐTT az
-    /// utolsó maradék-keret megérkezett (→ "status ciklus beragad"). FILL-loopban (fastReconnect)
-    /// 0.5s elég: a friss kapcsolaton a maradékot az idle-zárás + stale-szűrő fogja, így nem
-    /// kell minden lépésnél a teljes 2,0s-ot kivárni (ez volt a felesleges ~2 mp/lépés).
+    /// Flush window absolute upper bound (closes even if never quiesces).
+    /// Conservative profile 2.0s: after CmdModelSet (run mode, mode=1) pump drains
+    /// notify buffer slower; smaller hard-deadline on max-window could close BEFORE
+    /// last leftover frame arrived (→ "status cycle stuck"). FILL-loop (fastReconnect)
+    /// 0.5s enough: on fresh connection idle-close + stale-filter handles leftover, so no
+    /// need to wait full 2.0s every step (that was excess ~2s/step).
     private var notifyFlushMaxWindow: TimeInterval { notifyFlushProfile.maxWindow }
-    /// A jelenlegi flush abszolút határideje (a max-window-ból).
+    /// Current flush absolute deadline (from max-window).
     private var notifyFlushHardDeadline: Date?
 
-    /// POST-READY GRACE: a ready jelzése UTÁN még rövid ideig (egy idle-gap) figyeljük,
-    /// nem szivárog-e be egy ELŐZŐ parancsból maradt keret. A status-ciklus beragadását
-    /// (CmdModelSet után) az okozta, hogy a stale csomag a ready után ~50ms-mal érkezett,
-    /// így már az onNotify-ra ment és a dekódoló kontextusát rontotta. Ha grace alatt érkezik
-    /// keret, MIELŐTT az új parancs első írása megtörtént (outIndex==0), maradéknak tekintjük
-    /// és eldobjuk — a tényleges parancs-válasz csak az első write UTÁN jön.
+    /// POST-READY GRACE: after ready signal, watch briefly (one idle-gap)
+    /// for leftover frame from PREVIOUS command. Status cycle stuck
+    /// (after CmdModelSet) caused by stale packet ~50ms after ready,
+    /// reaching onNotify and corrupting decoder context. If frame arrives during grace
+    /// BEFORE new command's first write (outIndex==0), treat as leftover
+    /// and discard — real command response only comes AFTER first write.
     private var notifyPostReadyGraceDeadline: Date?
-    /// A post-ready grace hossza (egy idle-gap elég a ~390ms-os ismétlési ciklus utolsó
-    /// keretének kiszűrésére, anélkül hogy valódi választ késleltetne).
+    /// Post-ready grace length (one idle-gap enough for ~390ms repeat cycle's last
+    /// frame filter, without delaying real response).
     private let notifyPostReadyGrace: TimeInterval = 0.30
 
-    /// STALE-FRAME SZŰRŐ (ismétlődés-alapú, az outIndex-től függetlenül). A temp basal
-    /// cancel→set láncnál a SET friss kapcsolaton fut, de a pumpa az ELŐZŐ (cancel)
-    /// parancs notify-kereteit MÉG a SET első write-ja UTÁN is ismételgeti (a logban
-    /// 01:34:12.157–16.752, ~4.5s, ugyanaz a 7 keret újra és újra). Az outIndex ekkor már
-    /// >0, ezért a post-ready grace nem szűrt, és a stale tartalom a dekódolóba ömlött →
-    /// 40s timeout → sárga loop. MEGOLDÁS: a flush + grace alatt LÁTOTT keretek hexjét
-    /// eltároljuk; a SET utáni grace-ablakban minden OLYAN keretet eldobunk, amit már
-    /// láttunk (= biztosan az előző parancs maradéka, mivel a friss válasz titkosított és
-    /// SOHA nem egyezik bitre az előzővel). A teljes stale-áradat így elcsendesedhet, és az
-    /// első, korábban NEM látott (valódi) válasz mehet a dekódolóra.
+    /// STALE-FRAME FILTER (repetition-based, independent of outIndex). Temp basal
+    /// cancel→set chain: SET runs on fresh connection, but pump still repeats PREVIOUS (cancel)
+    /// command notify frames EVEN AFTER SET's first write (in log
+    /// 01:34:12.157–16.752, ~4.5s, same 7 frames over and over). outIndex already
+    /// >0, so post-ready grace didn't filter, stale content flooded decoder →
+    /// 40s timeout → yellow loop. FIX: store hex of frames SEEN during flush + grace;
+    /// in post-SET grace window discard any frame already
+    /// seen (= surely previous command leftover, since fresh response is encrypted and
+    /// NEVER bit-identical to previous). Full stale flood can quiesce, and
+    /// first previously UNSEEN (real) response reaches decoder.
     private var seenStaleFrames: Set<String> = []
-    /// A stale-szűrő ablakának felső korlátja a ready után (akkor is felenged, ha a pumpa
-    /// sose csendesedik el — ekkor a normál cmdTimeout véd). A láncnál a stale-áradat
-    /// ~4.5s, ezért ennél bővebb ablak kell, mint a 0.30s-os grace.
+    /// Stale-filter window upper bound after ready (releases even if pump
+    /// never quiesces — normal cmdTimeout protects). In chain stale flood
+    /// ~4.5s, so wider window needed than 0.30s grace.
     private var staleFilterDeadline: Date?
     private let staleFilterWindow: TimeInterval = 6.0
 
@@ -215,7 +215,7 @@ public final class EquilBLEManager: NSObject {
         uartChar = nil
         outgoing = []
         outIndex = 0
-        // Stale-szűrő állapot törlése — a következő friss kapcsolat tiszta lappal indul.
+        // Clear stale-filter state — next fresh connection starts clean.
         seenStaleFrames.removeAll(keepingCapacity: true)
         staleFilterDeadline = nil
         notifyPostReadyGraceDeadline = nil
@@ -274,11 +274,11 @@ extension EquilBLEManager: CBCentralManagerDelegate {
         if let needle = nameFilterContains, !needle.isEmpty,
            !name.lowercased().contains(needle.lowercased()) { return }
         log("discover: \(name) rssi=\(RSSI)")
-        // Diagnosztikai listázás MINDIG lefut (ha be van kötve).
+        // Diagnostic listing ALWAYS runs (if wired).
         onDiscoverDiagnostic?(p, name)
-        // A runner connect-handlere CSAK akkor, ha NEM diagnosztikai-only módban vagyunk
-        // (azaz párosítás/parancs fut). Így a diagnosztikai scan nem csatlakozik véletlenül,
-        // a párosítás scan-je viszont a runner eredeti onDiscover-jét hívja → connect.
+        // Runner connect handler ONLY when NOT in diagnostic-only mode
+        // (i.e. pairing/command running). Diagnostic scan won't connect accidentally,
+        // pairing scan calls runner's original onDiscover → connect.
         if !diagnosticOnly { onDiscover?(p, name) }
     }
 
@@ -286,30 +286,30 @@ extension EquilBLEManager: CBCentralManagerDelegate {
         isConnected = true
         log("connected; discovering services")
         p.delegate = self
-        // NOTIFY-FLUSH ABLAK MÁR ITT NYÍLIK: a maradék notify-keretek (az ELŐZŐ parancsból)
-        // gyakran már a "ready" esemény ELŐTT érkeznek be (lásd 05.873 < 05.963 a logban).
-        // Ezért a csendesedési ablakot a kapcsolódás pillanatától indítjuk, hogy minden,
-        // ami connect és ready között jön, eldobódjon. A ready-t a didUpdateNotificationState
-        // hosszabbítja/véglegesíti.
+        // NOTIFY-FLUSH WINDOW OPENS HERE: leftover notify frames (from PREVIOUS command)
+        // often arrive BEFORE "ready" event (see 05.873 < 05.963 in log).
+        // So start quiescence window at connect moment so everything
+        // between connect and ready is discarded. ready finalized by didUpdateNotificationState
+        // extends/finalizes.
         notifyFlushActive = true
         notifyFlushDeadline = Date().addingTimeInterval(notifyFlushWindow)
         notifyFlushHardDeadline = Date().addingTimeInterval(notifyFlushMaxWindow)
-        // Tiszta grace-állapot minden friss kapcsolaton (előző ciklus maradéka ne számítson).
+        // Clean grace state every fresh connection (prior cycle leftover ignored).
         notifyPostReadyGraceDeadline = nil
-        // Stale-szűrő: új kapcsolaton a korábban látott keretek halmaza FRISS — a flush alatt
-        // érkező (eldobott) maradek-kereteket gyűjtjük ide, hogy a write után is felismerjük
-        // őket, ha a pumpa tovább ismétli (temp cancel→set lánc).
+        // Stale-filter: on new connection seen-frame set is FRESH — during flush
+        // collect discarded leftover frames here to recognize after write
+        // if pump keeps repeating (temp cancel→set chain).
         seenStaleFrames.removeAll(keepingCapacity: true)
         staleFilterDeadline = nil
-        // TELJES, MEGBÍZHATÓ DISCOVERY MINDEN RECONNECTNÉL (GATT-cache visszavonva).
-        // A connect-per-command modellben a TELJES BLE-bontás után az iOS ÉRVÉNYTELENÍTI a
-        // cache-elt CBService/CBCharacteristic referenciákat. A korábbi "ha már fel van
-        // fedezve, hagyd ki a discovery-t" cache halott/stale referenciákat használt újra
-        // reconnect után → a parancsok nem mentek át, a kapcsolat beragadt, és a
-        // deactivate/unpair sem futott le. Ezért MINDEN reconnectnél friss discovery fut
-        // (discoverServices → discoverCharacteristics → setNotifyValue), ahogy a cache ELŐTT.
-        // A stale uartChar referenciát is eldobjuk, hogy biztosan a frissen felfedezett
-        // characteristic-ot használjuk.
+        // FULL, RELIABLE DISCOVERY ON EVERY RECONNECT (GATT cache reverted).
+        // In connect-per-command model after FULL BLE disconnect iOS INVALIDATES
+        // cached CBService/CBCharacteristic references. Prior "if already
+        // discovered, skip discovery" reused dead/stale references on
+        // reconnect → commands failed, connection stuck, and
+        // deactivate/unpair didn't run. So EVERY reconnect runs fresh discovery
+        // (discoverServices → discoverCharacteristics → setNotifyValue), as before cache.
+        // Drop stale uartChar reference to use freshly discovered
+        // characteristic.
         uartChar = nil
         log("connected; discovering services (\(EquilBLEManager.serviceRadio))")
         p.discoverServices([EquilBLEManager.serviceRadio])
@@ -329,10 +329,10 @@ extension EquilBLEManager: CBCentralManagerDelegate {
         outgoing = []
         outIndex = 0
         onDisconnected?(error)
-        // AAPS connect-per-command modell: a disconnect NORMÁLIS (a pumpa ~11s inaktivitás
-        // után magától bont). NINCS auto-reconnect — a következő parancs maga csatlakozik
-        // a connectForCommand()-dal. Így nincs watchdog↔parancs kapcsolat-verseny, ami a
-        // bólusz 2. üzenetét meghiúsította (a pumpa 10s-os időzítője a parancs kezdetekor indul).
+        // AAPS connect-per-command: disconnect is NORMAL (pump ~11s inactivity
+        // then drops). NO auto-reconnect — next command connects itself
+        // via connectForCommand(). No watchdog↔command connection race that
+        // broke bolus 2nd message (pump 10s timer starts at command begin).
     }
 }
 
@@ -365,9 +365,9 @@ extension EquilBLEManager: CBPeripheralDelegate {
         if let error { log("didUpdateNotificationState error: \(error)")
             return }
         guard ch.isNotifying else { return }
-        // NOTIFY-FLUSH: a connect óta nyitva tartott csendesedési ablakot innentől MÉG
-        // egyszer kinyújtjuk a teljes window-ra, hogy a notify-engedélyezés után érkező
-        // maradék kereteket is biztosan eldobjuk. Csak a window LEJÁRTAKOR jelzünk ready-t.
+        // NOTIFY-FLUSH: quiescence window open since connect, from here STILL
+        // extend to full window so frames after notify-enable
+        // are surely discarded. Signal ready only when window EXPIRES.
         let myToken = UUID()
         notifyFlushToken = myToken
         notifyFlushActive = true
@@ -378,41 +378,41 @@ extension EquilBLEManager: CBPeripheralDelegate {
         log(
             "notifications enabled -> notify-flush (idle \(Int(notifyFlushIdleGap * 1000))ms / max \(Int(notifyFlushMaxWindow * 1000))ms)"
         )
-        // IDLE-ZÁRÁS: az ablakot a teljes window után kezdjük "figyelni", de minden
-        // beérkező maradék-keret (didUpdateValueFor) újra-ütemezi a csendes-időzítőt,
-        // így a ready garantáltan csak a csatorna tényleges elcsendesedése után jön.
+        // IDLE-CLOSE: start watching window after full window, but every
+        // incoming leftover frame (didUpdateValueFor) reschedules idle timer,
+        // so ready guaranteed only after channel actually quiesces.
         scheduleFlushIdleCheck(token: myToken, after: notifyFlushWindow)
     }
 
-    /// A flush-ablak idle-alapú lezárója. `after` múlva ellenőrzi: ha közben ÚJ flush
-    /// indult (token nem egyezik) → kilép. Ha elértük a hard-deadline-t VAGY az utolsó
-    /// maradék-keret óta eltelt az idle-gap → zár + ready. Különben újraütemezi magát.
+    /// Flush window idle-based closer. After `after` checks: if NEW flush
+    /// started (token mismatch) → exit. If hard-deadline reached OR since last
+    /// leftover frame idle-gap elapsed → close + ready. Otherwise reschedules.
     private func scheduleFlushIdleCheck(token: UUID, after delay: TimeInterval) {
         queue.asyncAfter(deadline: .now() + delay) { [weak self] in
             guard let self else { return }
             guard self.notifyFlushToken == token, self.notifyFlushActive else { return }
             let now = Date()
             let hardReached = (self.notifyFlushHardDeadline.map { now >= $0 }) ?? true
-            // notifyFlushDeadline-t minden beérkező maradék-keret előretolja (idle-gap-pel).
+            // notifyFlushDeadline advanced by every incoming leftover frame (idle-gap).
             let quietReached = (self.notifyFlushDeadline.map { now >= $0 }) ?? true
             if hardReached || quietReached {
                 self.notifyFlushActive = false
                 self.notifyFlushDeadline = nil
                 self.notifyFlushHardDeadline = nil
-                // POST-READY GRACE indítása: a ready után még egy idle-gap-ig figyelünk
-                // ELŐZő-parancs maradékra (lásd notifyPostReadyGrace doc). A grace csak
-                // addig él, amíg az új parancs első írása el nem indul (outIndex>0).
+                // Start POST-READY GRACE: after ready watch one more idle-gap
+                // for PREVIOUS-command leftover (see notifyPostReadyGrace doc). Grace only
+                // until new command's first write starts (outIndex>0).
                 self.notifyPostReadyGraceDeadline = Date().addingTimeInterval(self.notifyPostReadyGrace)
-                // Stale-szűrő ablak indítása: a ready után a flush alatt látott (= előző parancs)
-                // keretek ismétlődéseit a write után is eldobjuk, amíg a stale-áradat el nem csendesedik.
+                // Start stale-filter window: after ready discard repeats of frames seen during flush (= previous command)
+                // after write until stale flood quiesces.
                 self.staleFilterDeadline = Date().addingTimeInterval(self.staleFilterWindow)
                 self
                     .log(
-                        "notify-flush kész (\(hardReached ? "max-window" : "idle")) -> ready (grace \(Int(self.notifyPostReadyGrace * 1000))ms, stale-szűrő \(Int(self.staleFilterWindow * 1000))ms)"
+                        "notify-flush done (\(hardReached ? "max-window" : "idle")) -> ready (grace \(Int(self.notifyPostReadyGrace * 1000))ms, stale-filter \(Int(self.staleFilterWindow * 1000))ms)"
                     )
                 self.onReady?()
             } else {
-                // Még nem csendesedett el — újra ellenőrizzük a következő idle-gap után.
+                // Not quiesced yet — recheck after next idle-gap.
                 self.scheduleFlushIdleCheck(token: token, after: self.notifyFlushIdleGap)
             }
         }
@@ -431,41 +431,41 @@ extension EquilBLEManager: CBPeripheralDelegate {
         if let error { log("didUpdateValueFor error: \(error)")
             return }
         guard let value = ch.value else { return }
-        // A csendesedési ablak alatt érkező kereteket eldobjuk (előző parancs maradéka).
-        // FONTOS: a notifyFlushActive flag a connect-től a window lejártáig MINDIG igaz,
-        // így a ready ELŐTT érkező maradék is biztosan eldobódik (nem csak a deadline-on belül).
+        // Discard frames during quiescence window (previous command leftover).
+        // IMPORTANT: notifyFlushActive true from connect until window expires ALWAYS,
+        // so leftover before ready surely discarded (not only within deadline).
         let hex = value.hexUpper
         if notifyFlushActive {
             log("notify (flush, eldobva): \(hex)")
-            // Stale-szűrő: a flush alatt látott keretet megjegyezzük, hogy a ready UTÁN is
-            // felismerjük, ha a pumpa tovább ismétli (temp cancel→set lánc).
+            // Stale-filter: remember frame seen during flush for after ready
+            // if pump keeps repeating (temp cancel→set chain).
             seenStaleFrames.insert(hex)
-            // IDLE-ZÁRÁS: minden eldobott maradék-keret előretolja a csendesedési
-            // határidőt, hogy a ready csak az utolsó maradék UTÁN, idle-gap-nyi csend
-            // után jöjjön (a hard-deadline a felső korlát).
+            // IDLE-CLOSE: every discarded leftover frame advances quiescence
+            // deadline so ready only after last leftover, idle-gap silence
+            // (hard-deadline is upper bound).
             notifyFlushDeadline = Date().addingTimeInterval(notifyFlushIdleGap)
             return
         }
-        // POST-READY GRACE: ha a ready óta nem telt el a grace, ÉS még nem indult el az
-        // új parancs első írása (outIndex==0), akkor ez nem lehet valódi parancs-válasz
-        // (a válasz mindig write UTÁN jön) → ELŐZő parancs maradéka, eldobjuk. Így a
-        // CmdModelSet után becsúszó stale csomag nem rontja a dekódoló kontextusát.
+        // POST-READY GRACE: if grace not elapsed since ready AND new command's first write
+        // not started (outIndex==0), this can't be real command response
+        // (response always after write) → PREVIOUS command leftover, discard. So
+        // stale packet after CmdModelSet doesn't corrupt decoder context.
         if outIndex == 0, let graceUntil = notifyPostReadyGraceDeadline, Date() < graceUntil {
             log("notify (post-ready grace, eldobva): \(hex)")
             seenStaleFrames.insert(hex)
             return
         }
-        // STALE-FRAME SZŰRŐ (outIndex-től FÜGGETLEN): a temp cancel→set láncnál a pumpa az
-        // előző parancs kereteit a SET első write-ja UTÁN is ismételgeti (outIndex>0). Ha a
-        // szűrő-ablakon belül vagyunk ÉS ezt a pontos keretet már láttuk a flush/grace alatt,
-        // akkor ez biztosan stale (a friss titkosított válasz SOHA nem egyezik bitre) → eldobjuk,
-        // és a szűrő-ablakot előretoljuk, hogy a teljes áradat elcsendesedhessen.
+        // STALE-FRAME FILTER (outIndex INDEPENDENT): in temp cancel→set chain pump
+        // repeats previous command frames AFTER SET's first write (outIndex>0). If
+        // within filter window AND exact frame seen during flush/grace,
+        // surely stale (fresh encrypted response NEVER bit-identical) → discard,
+        // advance filter window so full flood can quiesce.
         if let staleUntil = staleFilterDeadline, Date() < staleUntil, seenStaleFrames.contains(hex) {
-            log("notify (stale-ismétlődés, eldobva): \(hex)")
+            log("notify (stale-repeat, discarded): \(hex)")
             staleFilterDeadline = Date().addingTimeInterval(notifyFlushIdleGap)
             return
         }
-        // Az első valódi (korábban nem látott) válasz — a szűrőket lezárjuk és továbbadjuk.
+        // First real (previously unseen) response — close filters and forward.
         notifyPostReadyGraceDeadline = nil
         staleFilterDeadline = nil
         log("notify: \(hex)")
@@ -479,16 +479,16 @@ private extension Data {
     var hexUpper: String { map { String(format: "%02X", $0) }.joined() }
 }
 
-// MARK: - BT Watchdog implementáció (állandó kapcsolat + force-reconnect)
+// MARK: - BT Watchdog implementation (persistent connection + force-reconnect)
 
 //
-// iOS-specifikus megközelítés (erősebb mint az AAPS connect-per-command modell):
-// a párosított CBPeripheral-t megtartjuk, és central.connect()-tel tartjuk/visszakötjük.
-// A connect() timeout NÉLKÜL fut — iOS magától visszaköt, amint a pumpa hatótávba ér,
-// új scan nélkül. Ez kiküszöböli a bondolás utáni "nem hirdet újra nevet" scan-race-t,
-// ami a bólusz időtúllépést okozta.
+// iOS-specific approach (stronger than AAPS connect-per-command model):
+// keep paired CBPeripheral and hold/reconnect via central.connect().
+// connect() runs WITHOUT timeout — iOS reconnects when pump in range,
+// no new scan. Eliminates post-bond "doesn't advertise name again" scan-race,
+// which caused bolus timeout.
 public extension EquilBLEManager {
-    /// A sikeres párosítás után hívandó: eltárolja és "fogja" a peripheral-t a watchdoghoz.
+    /// Call after successful pairing: stores and "holds" peripheral for watchdog.
     func holdPeripheral(_ p: CBPeripheral) {
         watchdogPeripheralID = p.identifier
         peripheral = p
@@ -497,7 +497,7 @@ public extension EquilBLEManager {
         log("watchdog: peripheral fogva (\(p.name ?? "?")) id=\(p.identifier.uuidString.prefix(8))")
     }
 
-    /// Periodikus őr: ha be van kapcsolva és nincs kapcsolat, reconnect-et kísérel.
+    /// Periodic guard: if enabled and disconnected, attempts reconnect.
     func startWatchdog(intervalSeconds: Int = 3) {
         watchdogTimer?.cancel()
         let timer = DispatchSource.makeTimerSource(queue: queue)
@@ -507,7 +507,7 @@ public extension EquilBLEManager {
         )
         timer.setEventHandler { /* watchdog kikapcsolva — AAPS connect-per-command */ }
         watchdogTimer = timer
-        // NEM indítjuk el a timert: nincs periodikus reconnect (AAPS-modell).
+        // Do NOT start timer: no periodic reconnect (AAPS model).
         log("watchdog: periodikus reconnect KIKAPCSOLVA (connect-per-command)")
     }
 
@@ -515,19 +515,19 @@ public extension EquilBLEManager {
         watchdogEnabled = false
         watchdogTimer?.cancel()
         watchdogTimer = nil
-        log("watchdog: leállítva")
+        log("watchdog: stopped")
     }
 
-    /// Azonnali reconnect a megtartott peripheral-hoz (timeout nélkül — iOS hatótáv-figyel).
+    /// Immediate reconnect to held peripheral (no timeout — iOS range watch).
     func reconnectNow() {
         guard central.state == .poweredOn else {
             log("watchdog: BT nincs poweredOn (\(central.state.rawValue)) — kihagyva")
             return
         }
         guard let p = peripheral else {
-            // Talán app-újraindítás után vagyunk: próbáljuk visszakérni az ID alapján.
+            // Perhaps after app restart: try retrieve by ID.
             if let id = watchdogPeripheralID, retrieveAndHold(identifier: id) {
-                log("watchdog: peripheral visszakérve, reconnect…")
+                log("watchdog: peripheral retrieved, reconnect…")
                 if let pp = peripheral { central.connect(pp, options: nil) }
             } else {
                 log("watchdog: nincs megtartott peripheral — reconnect kihagyva")
@@ -535,11 +535,11 @@ public extension EquilBLEManager {
             return
         }
         if isConnected { return }
-        log("watchdog: reconnect kísérlet -> \(p.name ?? "?")")
+        log("watchdog: reconnect attempt -> \(p.name ?? "?")")
         central.connect(p, options: [CBConnectPeripheralOptionNotifyOnConnectionKey: true])
     }
 
-    /// App-újraindítás után: a bondolt peripheral visszakérése scan nélkül.
+    /// After app restart: retrieve bonded peripheral without scan.
     @discardableResult func retrieveAndHold(identifier: UUID) -> Bool {
         guard let p = central.retrievePeripherals(withIdentifiers: [identifier]).first else {
             return false
@@ -550,37 +550,37 @@ public extension EquilBLEManager {
 
     // MARK: - Connect-per-command (AAPS-modell)
 
-    // A pumpa ~11s inaktivitás után magától bont, ezért NEM tartunk állandó kapcsolatot
-    // parancs közben. A bólusz: pause watchdog → friss connect a megtartott peripheral-hoz
-    // (scan nélkül) → parancs lefut → resume watchdog. Így nincs scan/reconnect verseny.
+    // Pump drops after ~11s inactivity, so do NOT hold persistent connection
+    // during command. Bolus: pause watchdog → fresh connect to held peripheral
+    // (no scan) → command runs → resume watchdog. No scan/reconnect race.
 
-    /// Felfüggeszti a watchdog auto-reconnect-jét egy parancs idejére.
+    /// Suspends watchdog auto-reconnect for duration of one command.
     func pauseWatchdog() {
         watchdogPaused = true
-        log("watchdog: FELFÜGGESZTVE (parancs-futtatás alatt)")
+        log("watchdog: SUSPENDED (during command execution)")
     }
 
-    /// Visszakapcsolja a watchdog auto-reconnect-jét a parancs után.
+    /// Re-enables watchdog auto-reconnect after command.
     func resumeWatchdog() {
         guard watchdogEnabled else { return }
         watchdogPaused = false
         log("watchdog: FOLYTATVA")
     }
 
-    /// Friss kapcsolatot épít a megtartott peripheral-hoz scan NÉLKÜL (AAPS connectEquil).
-    /// Ha már él a kapcsolat, az onConnected-et nem várjuk — a hívó ellenőrzi isConnected-et.
-    /// Ha a peripheral elveszett (app-restart), ID alapján visszakéri.
+    /// Build fresh connection to held peripheral WITHOUT scan (AAPS connectEquil).
+    /// If already connected, don't wait for onConnected — caller checks isConnected.
+    /// If peripheral lost (app-restart), retrieve by ID.
     func connectForCommand() {
         guard central.state == .poweredOn else {
             log("connectForCommand: BT nincs poweredOn (\(central.state.rawValue))")
             return
         }
-        // Tiszta induló állapot: minden korábbi kapcsolatot bontunk, hogy a pumpa friss
-        // GATT-ot kapjon (a fél-állapotú kapcsolat okozta a néma 10s-os pumpa-bontást).
+        // Clean start: disconnect all prior connections so pump gets fresh
+        // GATT (half-open connection caused silent 10s pump disconnect).
         if let p = peripheral {
             var didCancelLive = false
             if isConnected {
-                log("connectForCommand: bontás a friss kapcsolat előtt")
+                log("connectForCommand: disconnect before fresh connection")
                 central.cancelPeripheralConnection(p)
                 isConnected = false
                 uartChar = nil
@@ -591,24 +591,24 @@ public extension EquilBLEManager {
             outIndex = 0
             peripheral = p
             p.delegate = self
-            log("connectForCommand -> \(p.name ?? "?") (scan nélkül)")
-            // A 500 ms stack-tisztulási köz CSAK akkor kell, ha MOST bontottunk élő kapcsolatot.
-            // A connect-per-command fill-loopban a bontás MÁR megtörtént (EquilCommandQueue.finish),
-            // így itt isConnected==false → azonnal csatlakozunk, nincs felesleges 0,5s/lépés várakozás.
+            log("connectForCommand -> \(p.name ?? "?") (no scan)")
+            // 500ms stack settle gap ONLY if we JUST disconnected live connection.
+            // In connect-per-command fill-loop disconnect ALREADY happened (EquilCommandQueue.finish),
+            // so isConnected==false → connect immediately, no extra 0.5s/step wait.
             let settle: DispatchTimeInterval = didCancelLive ? .milliseconds(500) : .milliseconds(0)
             queue.asyncAfter(deadline: .now() + settle) { [weak self] in
                 guard let self, let pp = self.peripheral else { return }
                 self.central.connect(pp, options: nil)
             }
         } else if let id = watchdogPeripheralID, retrieveAndHold(identifier: id) {
-            log("connectForCommand: peripheral visszakérve ID alapján")
+            log("connectForCommand: peripheral retrieved by ID")
             if let pp = peripheral {
                 queue.asyncAfter(deadline: .now() + .milliseconds(500)) { [weak self] in
                     self?.central.connect(pp, options: nil)
                 }
             }
         } else {
-            log("connectForCommand: nincs megtartott peripheral — scan-re esünk vissza")
+            log("connectForCommand: no held peripheral — falling back to scan")
             startScan()
         }
     }

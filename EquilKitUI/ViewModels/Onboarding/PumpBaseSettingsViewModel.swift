@@ -49,8 +49,8 @@ class PumpBaseSettingsViewModel: ObservableObject {
         if !currentSN.isEmpty, currentSN != normalized {
             logger.info("Serial number change detected -> Removing references to old pump base...")
             pumpManager.bluetooth.clearPeripheral()
-            // PUMPACSERE: SN-váltáskor a régi pumpa credentials-ét is töröljük, hogy ÚJ párosítás
-            // KELLJEN (ne maradjon új-SN + régi-token). A priming-gate is reseteljen.
+            // PUMP SWAP: on SN change clear old pump credentials so NEW pairing
+            // is REQUIRED (no new-SN + old-token). Reset priming gate too.
             pumpManager.state.deviceToken = ""
             pumpManager.state.password = ""
             pumpManager.state.pairingPassword = ""

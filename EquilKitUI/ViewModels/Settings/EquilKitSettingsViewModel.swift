@@ -235,9 +235,9 @@ class EquilKitSettingsViewModel: PatchLifetimeFormatting, ObservableObject, Pump
         deletePumpWithSafeSequence()
     }
 
-    /// Pumpa eltávolítás KÖTELEZŐ sorrendben: 1) Retract Plunger → 2) Stop → 3) Unpair/forget.
-    /// A pump-oldali retract+stop (és a state törlés + BLE bontás) SIKERESEN lefut (vagy
-    /// hibakezelés) MIELŐTT a Trio-oldali eltávolítás (pumpRemovalAction) megtörténik.
+    /// Pump removal REQUIRED sequence: 1) Retract Plunger → 2) Stop → 3) Unpair/forget.
+    /// Pump-side retract+stop (and state clear + BLE disconnect) completes successfully (or
+    /// error handling) BEFORE Trio-side removal (pumpRemovalAction).
     func deletePumpWithSafeSequence() {
         guard let pumpManager = self.pumpManager else {
             pumpRemovalAction()
@@ -251,9 +251,9 @@ class EquilKitSettingsViewModel: PatchLifetimeFormatting, ObservableObject, Pump
                 guard let self else { return }
                 self.isRetractingPlunger = false
                 if let error {
-                    self.log.error("Unpair sequence error (folytatás az eltávolítással): \(error)")
+                    self.log.error("Unpair sequence error (continuing with removal): \(error)")
                 }
-                // 3) Unpair/forget: a delegate értesítés + Trio-oldali eltávolítás.
+                // 3) Unpair/forget: delegate notification + Trio-side removal.
                 pumpManager.notifyDelegateOfDeactivation {
                     DispatchQueue.main.async {
                         self.pumpRemovalAction()

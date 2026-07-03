@@ -246,10 +246,10 @@ public class EquilPumpState: RawRepresentable {
 
     public var serialNumber: String
     public var password: String
-    /// Az EREDETI párosító jelszó (a felhasználó 4-hex jelszava), amivel a pumpa párosítva lett.
-    /// A `password` a sikeres párosítás után a kialkudott 64-hex device-jelszóra íródik felül,
-    /// de a CmdUnPair (pumpa felszabadítása) az EREDETI párosító jelszót igényli (SN-származtatott
-    /// kulcs + getEquilPassWord(pairingPassword)), ezért külön megőrizzük. Pumpacserénél törlődik.
+    /// ORIGINAL pairing password (user 4-hex password) used to pair the pump.
+    /// `password` is overwritten with negotiated 64-hex device password after successful pairing,
+    /// but CmdUnPair (pump release) requires ORIGINAL pairing password (SN-derived
+    /// key + getEquilPassWord(pairingPassword)), so kept separately. Cleared on pump swap.
     public var pairingPassword: String = ""
     /// Negotiated device hex from CmdPair (AAPS equilDevice).
     public var deviceToken: String
@@ -278,11 +278,11 @@ public class EquilPumpState: RawRepresentable {
     public var maxDailyInsulin: Double = 100
     /// CmdAlarmSet mode (0=mute, 1=tone, 2=shake, 3=tone+shake).
     public var alarmModeRaw: Int = AlarmMode.tone.rawValue
-    /// Az átmeneti MUTE előtti alarm-mód (suspend / zero-temp idejére mentve). Resume-nál
-    /// ezt állítjuk vissza, majd töröljük (nil). nil = nincs aktív átmeneti mute.
+    /// Alarm mode before temporary MUTE (saved during suspend / zero-temp). On resume
+    /// restore this, then clear (nil). nil = no active temporary mute.
     public var savedAlarmModeBeforeSuspend: Int?
-    /// true, ha a felhasználó a dashboard alarm pickerből választott módot (setAlarmMode persist:true).
-    /// Suspend/temp0 után csak ilyenkor állítunk vissza nem-néma módot; egyébként Silent marad.
+    /// true if user chose mode from dashboard alarm picker (setAlarmMode persist:true).
+    /// After suspend/temp0 only then restore non-silent mode; otherwise stays Silent.
     public var userExplicitAlarmMode: Bool = false
     public var alarmSetting: AlarmSettings = .BeepOnly
     public var expiryMode: ExpiryMode = .default
@@ -294,14 +294,14 @@ public class EquilPumpState: RawRepresentable {
     public var battery: Double = 0
 
     /// CmdHistoryGet reports patch battery as 0–100% (same as Loop EquilPumpKit).
-    /// A 0 érték gyakran „nincs adat” (üres history rekord), nem tényleges 0% — ne írjuk felül
-    /// a sync/MASK_BATTERY-ből már beolvasott százalékot (különben a HUD eltűnik).
+    /// Value 0 often means "no data" (empty history record), not actual 0% — do not overwrite
+    /// percentage already read from sync/MASK_BATTERY (otherwise HUD disappears).
     func applyHistoryBattery(_ percent: Int) {
         guard percent > 0 else { return }
         battery = Double(min(100, max(0, percent)))
     }
 
-    /// 0…1 töltöttség a Loop `pumpBatteryChargeRemaining` / Trio HUD számára; nil = még nincs olvasás.
+    /// 0…1 charge for Loop `pumpBatteryChargeRemaining` / Trio HUD; nil = no reading yet.
     var patchBatteryFraction: Double? {
         guard battery > 0 else { return nil }
         return min(max(battery / 100.0, 0), 1)
@@ -331,11 +331,11 @@ public class EquilPumpState: RawRepresentable {
     public var previousPatch: PreviousPatch?
     public var swVersion: String = ""
     public var deviceType: UInt8 = 0
-    /// Az utolsó sikeres `CmdTimeSet` ideje. Akku-kímélés: a TimeSet NEM fut minden
-    /// syncnél (AAPS sem teszi), csak ha tényleg kell — lásd `lastTimeSetGMTOffset`.
+    /// Time of last successful `CmdTimeSet`. Battery saving: TimeSet does NOT run every
+    /// sync (AAPS doesn't either), only when needed — see `lastTimeSetGMTOffset`.
     public var lastTimeSetAt: Date?
-    /// A legutóbbi TimeSet-kor érvényes GMT-eltolás (másodperc). Ha ez megváltozik
-    /// (időzóna-/DST-váltás), a következő syncnél újra elküldjük a CmdTimeSet-et.
+    /// GMT offset (seconds) valid at last TimeSet. If this changes
+    /// (timezone/DST change), CmdTimeSet is sent again on next sync.
     public var lastTimeSetGMTOffset: Int?
 
     public var patchActivatedAt: Date? {

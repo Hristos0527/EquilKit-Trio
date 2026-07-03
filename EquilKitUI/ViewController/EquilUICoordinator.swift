@@ -323,7 +323,7 @@ public final class EquilUICoordinator: UINavigationController, PumpManagerOnboar
 }
 
 extension EquilUICoordinator {
-    /// Priming fill-loop vagy aktív priming-flow latch alatt tilos elnavigálni a priming képernyőről.
+    /// Must not navigate away from priming screen while fill-loop or active priming-flow latch.
     private func isPrimingNavigationBlocked() -> Bool {
         guard let pumpManager else { return false }
         return pumpManager.isPrimingActive || pumpManager.isPrimingFlowLatched
