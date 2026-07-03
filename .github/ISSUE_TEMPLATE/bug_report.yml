@@ -1,0 +1,101 @@
+name: Bug report
+description: Report a problem with EquilKit-Trio (BLE pump plugin)
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. This is community software — not official Equil or Trio support.
+        Do not share passwords, API secrets, or full treatment data.
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: iPhone model (e.g. iPhone 15 Pro)
+      placeholder: iPhone 15 Pro
+    validations:
+      required: true
+
+  - type: input
+    id: ios
+    attributes:
+      label: iOS version
+      description: Settings → General → About
+      placeholder: "17.5"
+    validations:
+      required: true
+
+  - type: input
+    id: trio_version
+    attributes:
+      label: Trio version / build
+      description: Trio app version or git tag you built from
+      placeholder: v0.8.4 / trio-build-55
+    validations:
+      required: true
+
+  - type: input
+    id: equilkit_version
+    attributes:
+      label: EquilKit-Trio version
+      description: Git tag or commit (e.g. v1.0.0)
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Equil patch hardware
+      options:
+        - Equil 5.3
+        - Equil 5.4
+        - Other / unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a clean app launch if possible
+      placeholder: |
+        1. Pair Equil patch
+        2. Start priming
+        3. Background the app for 5 minutes
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: EquilLogBuffer export, Xcode console, or relevant BLE logs (redact personal info)
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: disclaimer
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I understand this is community sideload software and not medical advice
+          required: true

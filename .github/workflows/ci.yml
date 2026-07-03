@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Clone LoopKit
+        run: git clone --depth 1 https://github.com/LoopKit/LoopKit.git ../LoopKit
+
+      - name: Build LoopKit (iOS Simulator)
+        run: |
+          xcodebuild \
+            -project ../LoopKit/LoopKit.xcodeproj \
+            -scheme Shared \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            -derivedDataPath ../LoopKit/build \
+            ONLY_ACTIVE_ARCH=NO \
+            build
+
+      - name: Build EquilKit (iOS Simulator)
+        env:
+          LOOPKIT_PRODUCTS: ${{ github.workspace }}/../LoopKit/build/Build/Products/Debug-iphonesimulator
+        run: |
+          xcodebuild \
+            -project EquilKit.xcodeproj \
+            -scheme EquilKit \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            ONLY_ACTIVE_ARCH=NO \
+            FRAMEWORK_SEARCH_PATHS="$LOOPKIT_PRODUCTS" \
+            SWIFT_INCLUDE_PATHS="$LOOPKIT_PRODUCTS" \
+            build
