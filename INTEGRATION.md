@@ -135,7 +135,7 @@ case .equil:
 import EquilKit
 
 let equilLog = EquilLogBuffer.shared.exportText()
-if equilLog != "Equil napló üres." {
+if equilLog != "Equil log is empty." {
     let equilURL = fileManager.temporaryDirectory.appendingPathComponent("equil-debug.log")
     try? equilLog.write(to: equilURL, atomically: true, encoding: .utf8)
     items.append(equilURL)

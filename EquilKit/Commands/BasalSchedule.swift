@@ -2,7 +2,7 @@ import Foundation
 
 public struct BasalScheduleEntry: Equatable {
     public let rate: Double
-    /// Másodperc a nap kezdetétől (0, 3600, …, 82800).
+    /// Seconds from start of day (0, 3600, …, 82800).
     public let startTimeSeconds: Int
 }
 
@@ -15,7 +15,7 @@ public struct BasalSchedule: Equatable {
         self.entries = entries
     }
 
-    /// 24 óránkénti bazál U/h értékekből (AAPS mapProfileToBasalSchedule).
+    /// From 24 hourly basal U/h values (AAPS mapProfileToBasalSchedule).
     public static func fromHourlyRates(_ rates: [Double]) -> BasalSchedule {
         precondition(rates.count == 24, "Expected 24 hourly basal rates")
         let entries = rates.enumerated().map { i, rate in

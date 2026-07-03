@@ -29,7 +29,7 @@ Both are tested on iPhone with Trio v0.8.4 + my fork integrations. Equil and Lin
 - Integration guide: `INTEGRATION.md` in each repo
 
 ## Real-world testing
-Author has **self-hosted daily use for ~2 weeks** (Equil + Linx + Trio on iPhone) before sharing.
+**Hristos (@Hristos0527)** has **self-hosted daily use for ~2 weeks** (Equil + Linx + Trio on iPhone) before sharing.
 
 **EquilKit** implementation references the **AndroidAPS Equil integration** (BLE command model, prime/dosing behaviour), reimplemented as a Trio PumpManager plugin. **LinxCGMKit** is an original CGM plugin (passive BLE scan); not from AAPS.
 

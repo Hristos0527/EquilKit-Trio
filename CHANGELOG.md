@@ -23,4 +23,4 @@ Initial public community release (Trio Build #55 state).
 ### Notes
 
 - Behavioral reference: [AndroidAPS Equil driver](https://github.com/nightscout/AndroidAPS)
-- Author self-tested ~2 weeks daily use before release (n=1)
+- Author: Hristos (@Hristos0527)

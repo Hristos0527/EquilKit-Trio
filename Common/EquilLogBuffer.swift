@@ -42,7 +42,7 @@ public final class EquilLogBuffer {
         lock.lock()
         defer { lock.unlock() }
         if lines.isEmpty {
-            return "Equil napló üres."
+            return "Equil log is empty."
         }
         return lines.joined(separator: "\n")
     }
@@ -51,7 +51,7 @@ public final class EquilLogBuffer {
         lock.lock()
         defer { lock.unlock() }
         if lines.isEmpty {
-            return "Nincs naplóbejegyzés."
+            return "No log entries."
         }
         return lines.suffix(max(1, lineCount)).joined(separator: "\n")
     }

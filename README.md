@@ -1,5 +1,12 @@
 # EquilKit for Trio
 
+## Author
+
+**Hristos** ([@Hristos0527](https://github.com/Hristos0527)) — developer and maintainer of this community plugin.
+
+- Self-tested on personal daily use (~2 weeks) before release
+- EquilKit: ported from AndroidAPS Equil driver reference
+
 A **LoopKit `PumpManager` plugin** for the **Equil patch pump** (BLE), designed to integrate with [Nightscout Trio](https://github.com/nightscout/Trio) as an optional pump driver.
 
 ## Features
@@ -69,14 +76,3 @@ This software is provided **as-is** for **experienced developers** who build and
 - **Test thoroughly** with backup therapy and supervision appropriate to your situation before relying on it overnight or for automated insulin delivery.
 
 By building or using this code, you accept full responsibility for your diabetes management decisions.
-
----
-
-## Magyarul (röviden)
-
-**EquilKit** egy Trió-kompatibilis BLE pumpa-plugin az Equil tapasz pumpához (párosítás, prime, bólusz, temp basal, háttér keepalive).
-
-- **~2 hete** saját magamon, napi használatban tesztelem.
-- Az Equil illesztés az **AndroidAPS Equil driver** viselkedésére épül, Trió / LoopKit architektúrára portolva.
-- **Saját felelősségre** buildelendő; nem orvostechnikai eszköz.
-- Bekötés: [INTEGRATION.md](INTEGRATION.md)

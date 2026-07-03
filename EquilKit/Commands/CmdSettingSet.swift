@@ -14,7 +14,7 @@ final class CmdSettingSet: EquilBaseSetting {
         bolusThresholdStep = EquilUtils.decodeSpeedToUH(maxBolus)
         basalThresholdStep = EquilUtils.decodeSpeedToUH(maxBasal)
         super.init(createTime: createTime, equilDevice: equilDevice, equilPassword: equilPassword)
-        // BaseSetting DEFAULT_PORT (0F0F) — a CmdSettingSet nem írja felül a portot.
+        // BaseSetting DEFAULT_PORT (0F0F) — CmdSettingSet does not override the port.
     }
 
     override var commandLabel: String { "Settings (CmdSettingSet)" }

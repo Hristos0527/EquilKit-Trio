@@ -66,8 +66,8 @@ class NotificationPacket: MedtrumBasePacket, MedtrumBasePacketProtocol {
     }
 
     func parseResponse() -> SynchronizePacketResponse {
-        // A heartbeat/notification útvonal nem ellenőrzi a hasEnoughData-t, ezért itt
-        // védjük a state + fieldMask (3 bájt) minimumot, különben az index trap-el.
+        // The heartbeat/notification path does not check hasEnoughData, so guard the
+        // state + fieldMask (3 bytes) minimum here to avoid an index trap.
         guard totalData.count >= mimimumDataSize else {
             return emptyResponse(state: .none)
         }
@@ -117,8 +117,8 @@ class NotificationPacket: MedtrumBasePacket, MedtrumBasePacketProtocol {
         // Proces masks
         for (mask, handler) in maskHandlers.sorted(by: { $0.key < $1.key }) {
             if fieldMask & mask != 0 {
-                // Bounds-védelem: ha a (csonka) BLE-csomagban nincs elég bájt a mezőhöz,
-                // leállítjuk a parszolást a részeredménnyel a fatal index-trap helyett.
+                // Bounds guard: if the (truncated) BLE packet lacks enough bytes for the field,
+                // stop parsing with the partial result instead of a fatal index trap.
                 let needed = maskByteSizes[mask] ?? 0
                 guard offset >= 0, offset + needed <= syncData.count else {
                     break
@@ -130,8 +130,8 @@ class NotificationPacket: MedtrumBasePacket, MedtrumBasePacketProtocol {
         return output
     }
 
-    /// A maszkonkénti, offset-től olvasott bájtszám (a handler-ek `offset + N`
-    /// visszatérési értékeivel egyezően), a parszolás előtti bounds-ellenőrzéshez.
+    /// Byte count read from offset per mask (matches handler `offset + N` return values)
+    /// for bounds checking before parsing.
     private let maskByteSizes: [UInt16: Int] = [
         MASK_SUSPEND: 4,
         MASK_NORMAL_BOLUS: 3,
