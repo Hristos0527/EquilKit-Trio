@@ -24,9 +24,10 @@ I've built and daily-drive two Trio plugins:
 Both are tested on iPhone with Trio v0.8.4 + my fork integrations. Equil and Linx work alongside standard Trio (OmnipodKit, etc.) as separate pump/CGM plugins.
 
 ## Repos (public)
+- **One-command build (recommended for beginners):** https://github.com/Hristos0527/Trio-Equil-Linx-Build — pre-wired Trio + Equil + Linx, `./scripts/build.sh`
 - EquilKit: https://github.com/Hristos0527/EquilKit-Trio
 - LinxCGMKit: https://github.com/Hristos0527/LinxCGMKit-Trio
-- Integration guide: `INTEGRATION.md` in each repo
+- Integration guide: `INTEGRATION.md` in each kit repo (only needed if you build upstream Trio yourself)
 
 ## Real-world testing
 **Hristos (@Hristos0527)** has **self-hosted daily use for ~2 weeks** (Equil + Linx + Trio on iPhone) before sharing.
@@ -80,6 +81,7 @@ GitHub issue: <issue link>
 ### #dev (summary)
 ```
 Sharing two community Trio plugins: EquilKit + LinxCGMKit.
+One-command pre-wired build: https://github.com/Hristos0527/Trio-Equil-Linx-Build (./scripts/build.sh)
 - EquilKit: https://github.com/Hristos0527/EquilKit-Trio
 - LinxCGMKit: https://github.com/Hristos0527/LinxCGMKit-Trio
 GitHub issue: <issue link>
@@ -90,7 +92,7 @@ Happy to align with upstream if maintainers want submodules.
 
 ## Suggested order
 
-1. Push both public repos (done if you ran `gh repo create`)
-2. Open the GitHub Issue with repo links
+1. Push all public repos (kits + Trio-Equil-Linx-Build)
+2. Open the GitHub Issue with repo links (include the one-command build repo)
 3. Post on Discord with the issue link
 4. *(Optional)* Tag a GitHub Release `v1.0.0` on each repo
