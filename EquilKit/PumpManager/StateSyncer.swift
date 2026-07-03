@@ -1,0 +1,184 @@
+import LoopKit
+
+enum StateSyncer {
+    static func sync(
+        syncResponse: SynchronizePacketResponse,
+        state: EquilPumpState,
+        pumpManager: EquilPumpManager,
+        duringReconnect: Bool,
+        fullSync: Bool
+    ) {
+        if fullSync {
+            pumpManager.state.lastSync = Date.now
+        }
+
+        StateSyncer.updatePumpState(syncResponse: syncResponse, state: state, pumpManager: pumpManager)
+
+        if let reservoir = syncResponse.reservoir {
+            if let lowReservoirWarning = state.lowReservoirWarning,
+               state.reservoir > lowReservoirWarning,
+               reservoir < lowReservoirWarning
+            {
+                // Send low reservoir warning notification to user
+                NotificationManager.reservoirLowNotification(reservoir)
+            }
+
+            state.reservoir = reservoir
+            if state.initialReservoir == nil {
+                state.initialReservoir = state.reservoir
+            }
+
+            if fullSync {
+                // to prevent spaming the OSAID app with reservoir updates
+                pumpManager.emitReservoirLevel()
+            }
+        }
+
+        if let basal = syncResponse.basal {
+            switch basal.type {
+            case .ABSOLUTE_TEMP,
+                 .RELATIVE_TEMP:
+                state.basalState = .tempBasal
+
+            case .STOP,
+                 .STOP_BASE_FAULT,
+                 .STOP_BATTERY_EMPTY,
+                 .STOP_DISCARD,
+                 .STOP_EMPTY,
+                 .STOP_EXPIRED,
+                 .STOP_OCCLUSION,
+                 .STOP_PATCH_FAULT,
+                 .STOP_PATCH_FAULT2,
+                 .SUSPEND_AUTO,
+                 .SUSPEND_KEY_LOST,
+                 .SUSPEND_LOW_GLUCOSE,
+                 .SUSPEND_MANUAL,
+                 .SUSPEND_MORE_THAN_MAX_PER_DAY,
+                 .SUSPEND_MORE_THAN_MAX_PER_HOUR,
+                 .SUSPEND_PREDICT_LOW_GLUCOSE:
+                state.basalState = .suspended
+
+            default:
+                state.basalState = .active
+            }
+        }
+
+        if let prime = syncResponse.primeProgress {
+            state.primeProgress = prime
+        }
+
+        if let battery = syncResponse.battery {
+            let percent = EquilPumpState.batteryPercent(fromPatchVoltage: battery.voltageB)
+            if let lowBatteryWarning = state.lowBatteryWarning,
+               state.battery > lowBatteryWarning,
+               percent > 0,
+               percent <= lowBatteryWarning
+            {
+                NotificationManager.batteryLowNotification(percent)
+            }
+
+            if percent > 0 {
+                state.battery = percent
+            }
+        }
+
+        if let startTime = syncResponse.startTime {
+            state.patchActivatedAt = startTime
+        }
+
+        if let storage = syncResponse.storage {
+            state.patchId = UInt64(storage.patchId).toData(length: 4)
+        }
+
+        if let bolusProgress = syncResponse.bolus {
+            pumpManager.updateBolusProgress(
+                delivered: bolusProgress.delivered,
+                completed: bolusProgress.completed,
+                useEstimatedEndDate: duringReconnect
+            )
+            pumpManager.state.bolusState = bolusProgress.completed ? .noBolus : .inProgress
+        } else if duringReconnect {
+            pumpManager.checkBolusDone()
+        }
+
+        pumpManager.notifyStateDidChange()
+    }
+
+    public static func fetchPatchTime(pumpManager: EquilPumpManager) async {
+        let logger = EquilLogger(category: "TimeSync")
+        let timeData = await pumpManager.bluetooth.write(GetTimePacket())
+
+        switch timeData {
+        case let .failure(error: error):
+            logger.warning("Failed to get current Patch time: \(error.errorDescription)")
+            return
+        case let .success(data: data):
+            guard let timeResponse = data as? GetTimePacketResponse else {
+                logger.error("Failed to get time: invalid response")
+                return
+            }
+
+            pumpManager.state.pumpTime = timeResponse.time
+            pumpManager.state.pumpTimeSyncedAt = Date.now
+            pumpManager.notifyStateDidChange()
+        }
+    }
+
+    public static func syncTime(pumpManager: EquilPumpManager) async {
+        let logger = EquilLogger(category: "TimeSync")
+
+        let timeData = await pumpManager.bluetooth.write(SetTimePacket(date: Date.now))
+        switch timeData {
+        case let .failure(error: error):
+            logger.error("Failed to sync time: \(error.errorDescription)")
+            return
+        default:
+            break
+        }
+
+        let timeZoneData = await pumpManager.bluetooth.write(
+            SetTimeZonePacket(date: Date.now, timeZone: TimeZone.current)
+        )
+        switch timeZoneData {
+        case let .failure(error: error):
+            logger.error("Failed to sync timezone: \(error.errorDescription)")
+            return
+        default:
+            await StateSyncer.fetchPatchTime(pumpManager: pumpManager)
+        }
+    }
+
+    private static func updatePumpState(
+        syncResponse: SynchronizePacketResponse,
+        state: EquilPumpState,
+        pumpManager: EquilPumpManager
+    ) {
+        // Priming közben a heartbeat/sync NEM írja felül a UI pumpState-et — különben a
+        // pillanatnyi eszköz-állapot (pl. primed/ejecting) idő előtt elnavigálna, miközben a
+        // fill-loop még fut. A primeProgress továbbra is frissül a sync() hívóban.
+        if !pumpManager.isPrimingActive, !pumpManager.isPrimingFlowLatched {
+            state.pumpState = syncResponse.state
+        }
+
+        // Send notification for specific states
+        // If this has already been done, iOS will remove the old one
+        switch syncResponse.state {
+        case .dailyMaxSuspended:
+            NotificationManager.patchDailyMaxNotification()
+        case .hourlyMaxSuspended:
+            NotificationManager.patchHourlyMaxNotification()
+        case .occlusion:
+            NotificationManager.occlusionNotification()
+        case .baseFault,
+             .patchFault,
+             .patchFaultd2:
+            NotificationManager.patchFaultNotification()
+        case .reservoirEmpty:
+            NotificationManager.reservoirEmptyNotification()
+        case .batteryOut:
+            NotificationManager.batteryEmptyNotification()
+        default:
+            break
+        }
+    }
+}

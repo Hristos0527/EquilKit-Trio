@@ -1,0 +1,1390 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CB1B4111B92D4CB2A4BEFAFA /* AESUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = C891E57D06BD41ADB1630860 /* AESUtil.swift */; };
+		ADB583760E1D4714AC62FCEA /* ActivationProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D902942D8F433585BF62DB /* ActivationProgress.swift */; };
+		369A346D2BFF408286D69735 /* AlarmMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8713FFD8DB2E4303AD12333E /* AlarmMode.swift */; };
+		28E5D1E5B42A4808BC84EEE5 /* CmdAlarmSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC02D888EFFE4E72B8BB3425 /* CmdAlarmSet.swift */; };
+		1DF693C2198A4066A2830BA3 /* CmdBasalGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6C3BA731DC432FBE1A3A75 /* CmdBasalGet.swift */; };
+		ADDDA3AC69CF4A70AA3CE4B1 /* CmdBasalSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F933C514B3B4096AD249A99 /* CmdBasalSet.swift */; };
+		87D89CD321AF4FF0A9BDBF9E /* CmdDevicesGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 621196509CCF400DA64E13D5 /* CmdDevicesGet.swift */; };
+		657DC155310141E4BD904FB9 /* CmdDevicesOldGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EBE00C5C03D4DB2A28D3D38 /* CmdDevicesOldGet.swift */; };
+		DE5BB758580D478FAFD1522E /* CmdExtendedBolusSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17177CDF82B344D39D23076A /* CmdExtendedBolusSet.swift */; };
+		BC721E8DE4BC4399B56BF117 /* CmdHistoryGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005611286A0240A5831E0390 /* CmdHistoryGet.swift */; };
+		EEDDE0ED4AA44BD8AD793F44 /* CmdInsulinChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BF6B1A360DB49A6944514BF /* CmdInsulinChange.swift */; };
+		EEDEFDA74732463A8B170068 /* CmdInsulinGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8725C8361D841B4BBEC7CAB /* CmdInsulinGet.swift */; };
+		7180E228D19148EC879F92C4 /* CmdLargeBasalSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF8A7A3AAE0478BB2FE3AFB /* CmdLargeBasalSet.swift */; };
+		2F521BB2A7C64DBAA57D3A3B /* CmdModelSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6C299293744EA28890B6CC /* CmdModelSet.swift */; };
+		05F11D5B91F7431EA1A16B12 /* CmdPair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8468FDDE6F554497B7E069F2 /* CmdPair.swift */; };
+		BBD1F04F15564CE98125B394 /* CmdResistanceGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46B59C4DB84D491792D00A8E /* CmdResistanceGet.swift */; };
+		0FD95C2D572847579D8C9099 /* CmdRunningModeGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1AA0E07C721444387B3FFF7 /* CmdRunningModeGet.swift */; };
+		D21270879ABB4965B7D2BBF5 /* CmdSettingSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD61966C2CA47089C926C0D /* CmdSettingSet.swift */; };
+		52D4FD90EF744D3CB7EDBE79 /* CmdStepSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FE002F01684AAD8CDD075F /* CmdStepSet.swift */; };
+		FCDF96634A214B339B43898D /* CmdTempBasalGet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A38F0D3805394DC19C15B46B /* CmdTempBasalGet.swift */; };
+		73062967CF444742A5C98F75 /* CmdTempBasalSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B133678A0B4953BCFDBEB8 /* CmdTempBasalSet.swift */; };
+		EAFA90C0FCE14600B772D8B2 /* CmdTimeSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BEBBEE420C468B96C772EC /* CmdTimeSet.swift */; };
+		20726FB6F61A4D03842CFA56 /* CmdUnPair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21AB49B9A2A842CDBA8414B0 /* CmdUnPair.swift */; };
+		EA0FEB134D694A0589041113 /* Crc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 977C9E1CDEA6443BACFA93B4 /* Crc.swift */; };
+		7F7D372D732741E88158D089 /* EquilBaseCmd.swift in Sources */ = {isa = PBXBuildFile; fileRef = 720F8778656841EA85DC96BA /* EquilBaseCmd.swift */; };
+		2BD0D984DEF4495FA34EB1D8 /* EquilBaseSetting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5926E0BFDEBE439F8B3E8205 /* EquilBaseSetting.swift */; };
+		50E5CFA75F944C08B329C024 /* EquilConst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0535721369E5483D9CC9FD9A /* EquilConst.swift */; };
+		530DCC6FDF3B4E00B9DC2E6D /* EquilFraming.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2536493B1C7345F9B1B20FEB /* EquilFraming.swift */; };
+		DFD9E26F10644A7E9A65CAAB /* EquilUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F86FEBB9762412CBF4CE30D /* EquilUtils.swift */; };
+		2C459174BA8F4D1DAA191F80 /* PumpEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4E89AA6CA6543D8B51E2EEA /* PumpEvent.swift */; };
+		2D928D1E03274A62B9EEF8F4 /* RunMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26908E365B5140A58609FB53 /* RunMode.swift */; };
+		0179EEAE33C741D497A45EB9 /* EquilBLEManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE19EEF8BB504D6CA5ECDB48 /* EquilBLEManager.swift */; };
+		AB1C168539764BD1850223CB /* EquilCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF96D527D45B45568479F571 /* EquilCommandRunner.swift */; };
+		3E0406E02EB7872E0013E362 /* Binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E0406DF2EB7872C0013E362 /* Binding.swift */; };
+		3E0AD9B22F23FF2500958E94 /* ActivityIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E0AD9B12F23FF2100958E94 /* ActivityIndicator.swift */; };
+		3E1390122D6E59B500A146C1 /* EquilPumpState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1390112D6E59B000A146C1 /* EquilPumpState.swift */; };
+		3E1390152D6E5C5E00A146C1 /* EquilScanResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1390142D6E5C5200A146C1 /* EquilScanResult.swift */; };
+		3E1390172D6E5EA000A146C1 /* EquilConnectResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1390162D6E5E9A00A146C1 /* EquilConnectResult.swift */; };
+		3E1532482D6F98D20020F015 /* Crypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1532472D6F98CF0020F015 /* Crypto.swift */; };
+		3E15324A2D6FA0080020F015 /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1532492D6FA0060020F015 /* Data.swift */; };
+		3E15324C2D6FA4280020F015 /* Int64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E15324B2D6FA4250020F015 /* Int64.swift */; };
+		3E15A4782DA2B6E6007F7D3C /* EquilReservoirView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E15A4772DA2B6E6007F7D3C /* EquilReservoirView.swift */; };
+		3E15A47C2DA2B718007F7D3C /* IdentifiableClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E15A47B2DA2B718007F7D3C /* IdentifiableClass.swift */; };
+		3E15A47E2DA2B723007F7D3C /* NibLoadable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E15A47D2DA2B723007F7D3C /* NibLoadable.swift */; };
+		3E15A4802DA2B857007F7D3C /* EquilReservoirView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3E15A47F2DA2B857007F7D3C /* EquilReservoirView.xib */; };
+		3E24AEC02DA1639F00C7733C /* PumpImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E24AEBF2DA1639F00C7733C /* PumpImage.swift */; };
+		3E26BE0D2D906A0D00E595B0 /* EquilUI.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3E26BE0C2D906A0D00E595B0 /* EquilUI.xcassets */; };
+		3E26BE112D906E5700E595B0 /* ReservoirView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E26BE102D906E5700E595B0 /* ReservoirView.swift */; };
+		3E4566632D8371EC00FE1E0C /* ActivityViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E4566622D8371EB00FE1E0C /* ActivityViewController.swift */; };
+		3E4566652D837A4900FE1E0C /* Bundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E4566642D837A4800FE1E0C /* Bundle.swift */; };
+		3E5060142D70E5CB00376609 /* Crc8.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5060132D70E5C900376609 /* Crc8.swift */; };
+		3E5060182D70EAF800376609 /* EquilWriteResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5060172D70EAF400376609 /* EquilWriteResult.swift */; };
+		3E50601E2D70F7A900376609 /* Date.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E50601D2D70F7A700376609 /* Date.swift */; };
+		3E5FB2AC2FA62CAC00E6151C /* CBUUID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E5FB2AB2FA62CA900E6151C /* CBUUID.swift */; };
+		3E6A00EE2DA03FE00085E6A4 /* PatchDeactivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6A00ED2DA03FE00085E6A4 /* PatchDeactivationView.swift */; };
+		3E6A00F02DA0421A0085E6A4 /* DeactivatePatchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6A00EF2DA042140085E6A4 /* DeactivatePatchViewModel.swift */; };
+		3E6A00F22DA0428E0085E6A4 /* EquilDeactivatePatchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6A00F12DA0428E0085E6A4 /* EquilDeactivatePatchResult.swift */; };
+		3E6B082D2DF2224900A484C6 /* BasalScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6B082C2DF2224500A484C6 /* BasalScheduleTests.swift */; };
+		3E767D032D67B319004B1971 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E767CE42D67AF35004B1971 /* OSLog.swift */; };
+		E1B001022D80D25D002648B0 /* EquilLogBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B001012D80D25D002648B0 /* EquilLogBuffer.swift */; };
+		3E767D4D2D67BA71004B1971 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E767D4C2D67BA71004B1971 /* LoopKitUI.framework */; };
+		3E767D532D67BC33004B1971 /* EquilHUDProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E767CFE2D67B1A9004B1971 /* EquilHUDProvider.swift */; };
+		3E77FEBA2D723AD400A15134 /* CryptoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E77FEB92D723AD200A15134 /* CryptoTests.swift */; };
+		3E77FEBC2D72F90000A15134 /* EquilBasePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E77FEBB2D72F8FC00A15134 /* EquilBasePacketTests.swift */; };
+		3E77FEC22D74B39300A15134 /* AlarmSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E77FEC12D74B39300A15134 /* AlarmSettings.swift */; };
+		3E9547FB2D8D963600EEF259 /* EquilPrimePatchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9547FA2D8D962D00EEF259 /* EquilPrimePatchResult.swift */; };
+		3ED27E1F2D80D25D0026488C /* PatchState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E1E2D80D25D0026488B /* PatchState.swift */; };
+		F1A001022D80D25D0026488B /* EquilPumpManager+Scanning.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A001012D80D25D0026488B /* EquilPumpManager+Scanning.swift */; };
+		F1A001042D80D25D0026488C /* EquilPairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A001032D80D25D0026488C /* EquilPairingView.swift */; };
+		F1A001062D80D25D0026488D /* EquilPairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A001052D80D25D0026488D /* EquilPairingViewModel.swift */; };
+		3E9547FD2D8D9CD600EEF259 /* EquilActivatePatchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9547FC2D8D9CCE00EEF259 /* EquilActivatePatchResult.swift */; };
+		3E98B84B2D6BB12C00DD5123 /* EquilKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B7D3A8D02C148CC4002EE003 /* EquilKit.framework */; platformFilter = ios; };
+		3E98B84C2D6BB12C00DD5123 /* EquilKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B7D3A8D02C148CC4002EE003 /* EquilKit.framework */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		3E98B8512D6BB2BC00DD5123 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E98B8502D6BB2B900DD5123 /* TimeInterval.swift */; };
+		3E9D8B0C2D88A3FA00008AF2 /* EquilDoseProgressReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9D8B0B2D88A3EF00008AF2 /* EquilDoseProgressReporter.swift */; };
+		3E9D8B102D88A5F200008AF2 /* UnfinalizedDose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9D8B0F2D88A5EC00008AF2 /* UnfinalizedDose.swift */; };
+		3E9D8B122D88A8F600008AF2 /* NewPumpEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9D8B112D88A8F100008AF2 /* NewPumpEvent.swift */; };
+		3EA69F052D95E605002EEF9F /* InsulinTypeSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA69F042D95E605002EEF9F /* InsulinTypeSelector.swift */; };
+		3EA87C3B2DAC2DBE00E897ED /* SynchronizeNotificationPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87C3A2DAC2DB300E897ED /* SynchronizeNotificationPacketTests.swift */; };
+		3EA87D4B2D7A2165007DD959 /* ActivatePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87D4A2D7A214B007DD959 /* ActivatePacketTests.swift */; };
+		3EA87D4D2D7A25ED007DD959 /* AuthorizePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87D4C2D7A25E5007DD959 /* AuthorizePacketTests.swift */; };
+		3EA87D512D7A29A4007DD959 /* CancelBolusPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87D502D7A29A1007DD959 /* CancelBolusPacketTests.swift */; };
+		3EA87D552D7A33AD007DD959 /* CancelTempBasalPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87D542D7A33A6007DD959 /* CancelTempBasalPacketTests.swift */; };
+		3EA87D652D7A3DCE007DD959 /* GetTimePacketTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87D642D7A3DCA007DD959 /* GetTimePacketTest.swift */; };
+		3EA87D6D2D7A404C007DD959 /* PrimePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA87D6C2D7A4046007DD959 /* PrimePacketTests.swift */; };
+		3EB1A3B12D7784410031C044 /* BasalSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB1A3B02D77843E0031C044 /* BasalSchedule.swift */; };
+		3ED27C072DB67ED5001B7C95 /* EquilUpdatePatchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27C062DB67ED5001B7C95 /* EquilUpdatePatchResult.swift */; };
+		3ED27E072D80BA130026488B /* SetBolusPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E062D80BA130026488B /* SetBolusPacketTests.swift */; };
+		3ED27E0B2D80BC960026488B /* SetPatchPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E0A2D80BC900026488B /* SetPatchPacketTests.swift */; };
+		3ED27E0F2D80BFF90026488B /* SetTempBasalPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E0E2D80BFF40026488B /* SetTempBasalPacketTests.swift */; };
+		3ED27E112D80C4320026488B /* SetTimePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E102D80C42C0026488B /* SetTimePacketTests.swift */; };
+		3ED27E132D80C5BD0026488B /* SetTimeZonePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E122D80C5BB0026488B /* SetTimeZonePacketTests.swift */; };
+		3ED27E172D80C9ED0026488B /* StopPatchPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E162D80C9EC0026488B /* StopPatchPacketTests.swift */; };
+		3ED27E192D80CA3B0026488B /* SubscribePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E182D80CA350026488B /* SubscribePacketTests.swift */; };
+		3ED27E1B2D80CAC40026488B /* SynchronizePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED27E1A2D80CABB0026488B /* SynchronizePacketTests.swift */; };
+		3EE340AE2E4D1A880040E346 /* EquilKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7D3A8ED2C14F0EF002EE003 /* EquilKitPlugin.swift */; };
+		3EE340B42E4D1C6F0040E346 /* EquilKitPlugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 3EE340B32E4D1C6F0040E346 /* EquilKitPlugin.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3EE340B62E4D1E740040E346 /* EquilKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3EE340B52E4D1E740040E346 /* EquilKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3EEA51FD2D7E1C27000C9E1E /* ResumePumpPacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEA51FC2D7E1C23000C9E1E /* ResumePumpPacketTests.swift */; };
+		3EEA52012D7E1E10000C9E1E /* SetBasalProfilePacketTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EEA52002D7E1E0D000C9E1E /* SetBasalProfilePacketTests.swift */; };
+		3EF5B0702F79381B00504678 /* AuthorizeBiometrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF5B06F2F79381400504678 /* AuthorizeBiometrics.swift */; };
+		3EFBC4F42DFB527400E0E295 /* DeleteDriverActionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EFBC4F32DFB526900E0E295 /* DeleteDriverActionSheet.swift */; };
+		B6E920502EAFBB390076D719 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B6E9204F2EAFBB380076D719 /* Localizable.xcstrings */; };
+		B7189AE72C15A52800703DE2 /* EquilPumpManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7189AE52C15A52800703DE2 /* EquilPumpManager.swift */; };
+		20AE1AB4D2934402B827EA8C /* EquilCommandQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0992F42637F4406AF944FCF /* EquilCommandQueue.swift */; };
+
+		B7189AEA2C15A8CE00703DE2 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B7189AE92C15A8CE00703DE2 /* LoopKit.framework */; };
+		B7D3A8DB2C148CC4002EE003 /* EquilKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B7D3A8D02C148CC4002EE003 /* EquilKit.framework */; };
+		DD334CAC2F941CC90082A5B5 /* PatchLifetimeFormatting+Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD334CAB2F941CC90082A5B5 /* PatchLifetimeFormatting+Helper.swift */; };
+		8F78345128D94E5ABCE577D4 /* EquilPumpManager+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD24F51597CD41249E32CBA4 /* EquilPumpManager+UI.swift */; };
+		000AEC0B6D374221B8E01125 /* EquilUICoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD64A9DBA5AB41249D6BE659 /* EquilUICoordinator.swift */; };
+		E1A001012D80D25D0026488E /* EquilKitSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E26BE0A2D9069A600E595B0 /* EquilKitSettings.swift */; };
+		E1A001022D80D25D0026488F /* EquilKitSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E26BE0E2D906AE500E595B0 /* EquilKitSettingsViewModel.swift */; };
+		E1A001032D80D25D00264890 /* EquilDashboardTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A001002D80D25D00264890 /* EquilDashboardTypes.swift */; };
+		E1A001042D80D25D00264891 /* EquilPumpManager+Dashboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A001012D80D25D00264891 /* EquilPumpManager+Dashboard.swift */; };
+		E1A001162D80D25D002648A2 /* EquilPumpManager+AlarmMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A001172D80D25D002648A2 /* EquilPumpManager+AlarmMode.swift */; };
+		E1A001182D80D25D002648A3 /* EquilPumpManager+BackgroundKeepalive.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A001192D80D25D002648A3 /* EquilPumpManager+BackgroundKeepalive.swift */; };
+		E1A001052D80D25D00264892 /* ClearAlertPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E868C2C2F75BEE800ED6336 /* ClearAlertPacket.swift */; };
+		E1A001062D80D25D00264893 /* EquilPumpManager+PatchLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1A001072D80D25D00264893 /* EquilPumpManager+PatchLifecycle.swift */; };
+		E1A001082D80D25D00264894 /* PatchPrimingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E24AEC12DA1727800C7733C /* PatchPrimingView.swift */; };
+		E1A001092D80D25D00264895 /* PatchPrimingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E24AEC32DA1729A00C7733C /* PatchPrimingViewModel.swift */; };
+		E1A0010A2D80D25D00264896 /* PatchActivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E24AEC92DA17B7F00C7733C /* PatchActivationView.swift */; };
+		E1A0010B2D80D25D00264897 /* PatchActivationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E24AEC72DA17B4900C7733C /* PatchActivationViewModel.swift */; };
+		E1A0010C2D80D25D00264898 /* PumpBaseSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9A5C952DA1460700A4102D /* PumpBaseSettingsView.swift */; };
+		E1A0010D2D80D25D00264899 /* PumpBaseSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E9A5C972DA1461600A4102D /* PumpBaseSettingsViewModel.swift */; };
+		E1A0010E2D80D25D0026489A /* PatchSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA69F062D95ECDE002EEF9F /* PatchSettingsView.swift */; };
+		E1A0010F2D80D25D0026489B /* PatchSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EDA29752D9B862800895031 /* PatchSettingsViewModel.swift */; };
+		E1A001102D80D25D0026489C /* PatchDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E78B42F6B2BA700DC4DF4 /* PatchDetailsView.swift */; };
+		E1A001112D80D25D0026489D /* PatchDetailsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E78B62F6B2C5C00DC4DF4 /* PatchDetailsViewModel.swift */; };
+		E1A001122D80D25D0026489E /* PreviousPatchDetailsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E7BE12F6B35A500DC4DF4 /* PreviousPatchDetailsView.swift */; };
+		E1A001132D80D25D0026489F /* PreviousPatchDetailsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E7BE32F6B365100DC4DF4 /* PreviousPatchDetailsViewModel.swift */; };
+		E1A001142D80D25D002648A0 /* OnboardingWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EA6C4502DA2947000963AAB /* OnboardingWelcomeView.swift */; };
+		E1A001152D80D25D002648A1 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E92D5222DA458E500E22577 /* NotificationManager.swift */; };
+		0B87F1A66815407782B28ADE /* BasalSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597CDA1AC75F480EB98F63D2 /* BasalSchedule.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3E98B84D2D6BB12C00DD5123 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B7D3A8C72C148CC4002EE003 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B7D3A8CF2C148CC4002EE003;
+			remoteInfo = EquilKit;
+		};
+		B7D3A8DC2C148CC4002EE003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B7D3A8C72C148CC4002EE003 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B7D3A8CF2C148CC4002EE003;
+			remoteInfo = EquilKit;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3E98B84F2D6BB12C00DD5123 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				3E98B84C2D6BB12C00DD5123 /* EquilKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		C891E57D06BD41ADB1630860 /* AESUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AESUtil.swift; path = EquilKit/Commands/AESUtil.swift; sourceTree = "<group>"; };
+		71D902942D8F433585BF62DB /* ActivationProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ActivationProgress.swift; path = EquilKit/Commands/ActivationProgress.swift; sourceTree = "<group>"; };
+		8713FFD8DB2E4303AD12333E /* AlarmMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AlarmMode.swift; path = EquilKit/Commands/AlarmMode.swift; sourceTree = "<group>"; };
+		AC02D888EFFE4E72B8BB3425 /* CmdAlarmSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdAlarmSet.swift; path = EquilKit/Commands/CmdAlarmSet.swift; sourceTree = "<group>"; };
+		5A6C3BA731DC432FBE1A3A75 /* CmdBasalGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdBasalGet.swift; path = EquilKit/Commands/CmdBasalGet.swift; sourceTree = "<group>"; };
+		5F933C514B3B4096AD249A99 /* CmdBasalSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdBasalSet.swift; path = EquilKit/Commands/CmdBasalSet.swift; sourceTree = "<group>"; };
+		621196509CCF400DA64E13D5 /* CmdDevicesGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdDevicesGet.swift; path = EquilKit/Commands/CmdDevicesGet.swift; sourceTree = "<group>"; };
+		3EBE00C5C03D4DB2A28D3D38 /* CmdDevicesOldGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdDevicesOldGet.swift; path = EquilKit/Commands/CmdDevicesOldGet.swift; sourceTree = "<group>"; };
+		17177CDF82B344D39D23076A /* CmdExtendedBolusSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdExtendedBolusSet.swift; path = EquilKit/Commands/CmdExtendedBolusSet.swift; sourceTree = "<group>"; };
+		005611286A0240A5831E0390 /* CmdHistoryGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdHistoryGet.swift; path = EquilKit/Commands/CmdHistoryGet.swift; sourceTree = "<group>"; };
+		2BF6B1A360DB49A6944514BF /* CmdInsulinChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdInsulinChange.swift; path = EquilKit/Commands/CmdInsulinChange.swift; sourceTree = "<group>"; };
+		E8725C8361D841B4BBEC7CAB /* CmdInsulinGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdInsulinGet.swift; path = EquilKit/Commands/CmdInsulinGet.swift; sourceTree = "<group>"; };
+		1FF8A7A3AAE0478BB2FE3AFB /* CmdLargeBasalSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdLargeBasalSet.swift; path = EquilKit/Commands/CmdLargeBasalSet.swift; sourceTree = "<group>"; };
+		3E6C299293744EA28890B6CC /* CmdModelSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdModelSet.swift; path = EquilKit/Commands/CmdModelSet.swift; sourceTree = "<group>"; };
+		8468FDDE6F554497B7E069F2 /* CmdPair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdPair.swift; path = EquilKit/Commands/CmdPair.swift; sourceTree = "<group>"; };
+		46B59C4DB84D491792D00A8E /* CmdResistanceGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdResistanceGet.swift; path = EquilKit/Commands/CmdResistanceGet.swift; sourceTree = "<group>"; };
+		C1AA0E07C721444387B3FFF7 /* CmdRunningModeGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdRunningModeGet.swift; path = EquilKit/Commands/CmdRunningModeGet.swift; sourceTree = "<group>"; };
+		6BD61966C2CA47089C926C0D /* CmdSettingSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdSettingSet.swift; path = EquilKit/Commands/CmdSettingSet.swift; sourceTree = "<group>"; };
+		23FE002F01684AAD8CDD075F /* CmdStepSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdStepSet.swift; path = EquilKit/Commands/CmdStepSet.swift; sourceTree = "<group>"; };
+		A38F0D3805394DC19C15B46B /* CmdTempBasalGet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdTempBasalGet.swift; path = EquilKit/Commands/CmdTempBasalGet.swift; sourceTree = "<group>"; };
+		D8B133678A0B4953BCFDBEB8 /* CmdTempBasalSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdTempBasalSet.swift; path = EquilKit/Commands/CmdTempBasalSet.swift; sourceTree = "<group>"; };
+		D0BEBBEE420C468B96C772EC /* CmdTimeSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdTimeSet.swift; path = EquilKit/Commands/CmdTimeSet.swift; sourceTree = "<group>"; };
+		21AB49B9A2A842CDBA8414B0 /* CmdUnPair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CmdUnPair.swift; path = EquilKit/Commands/CmdUnPair.swift; sourceTree = "<group>"; };
+		977C9E1CDEA6443BACFA93B4 /* Crc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Crc.swift; path = EquilKit/Commands/Crc.swift; sourceTree = "<group>"; };
+		720F8778656841EA85DC96BA /* EquilBaseCmd.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilBaseCmd.swift; path = EquilKit/Commands/EquilBaseCmd.swift; sourceTree = "<group>"; };
+		5926E0BFDEBE439F8B3E8205 /* EquilBaseSetting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilBaseSetting.swift; path = EquilKit/Commands/EquilBaseSetting.swift; sourceTree = "<group>"; };
+		0535721369E5483D9CC9FD9A /* EquilConst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilConst.swift; path = EquilKit/Commands/EquilConst.swift; sourceTree = "<group>"; };
+		2536493B1C7345F9B1B20FEB /* EquilFraming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilFraming.swift; path = EquilKit/Commands/EquilFraming.swift; sourceTree = "<group>"; };
+		6F86FEBB9762412CBF4CE30D /* EquilUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilUtils.swift; path = EquilKit/Commands/EquilUtils.swift; sourceTree = "<group>"; };
+		E4E89AA6CA6543D8B51E2EEA /* PumpEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PumpEvent.swift; path = EquilKit/Commands/PumpEvent.swift; sourceTree = "<group>"; };
+		26908E365B5140A58609FB53 /* RunMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RunMode.swift; path = EquilKit/Commands/RunMode.swift; sourceTree = "<group>"; };
+		BE19EEF8BB504D6CA5ECDB48 /* EquilBLEManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilBLEManager.swift; path = EquilKit/Bluetooth/EquilBLEManager.swift; sourceTree = "<group>"; };
+		DF96D527D45B45568479F571 /* EquilCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = EquilCommandRunner.swift; path = EquilKit/Bluetooth/EquilCommandRunner.swift; sourceTree = "<group>"; };
+		3E0406DF2EB7872C0013E362 /* Binding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Binding.swift; sourceTree = "<group>"; };
+		3E0489042D74B81D00E0B75A /* BasalType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasalType.swift; sourceTree = "<group>"; };
+		3E0AD9B12F23FF2100958E94 /* ActivityIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityIndicator.swift; sourceTree = "<group>"; };
+		3E13900F2D6E534600A146C1 /* BluetoothManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothManager.swift; sourceTree = "<group>"; };
+		3E1390112D6E59B000A146C1 /* EquilPumpState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilPumpState.swift; sourceTree = "<group>"; };
+		3E1390142D6E5C5200A146C1 /* EquilScanResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilScanResult.swift; sourceTree = "<group>"; };
+		3E1390162D6E5E9A00A146C1 /* EquilConnectResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilConnectResult.swift; sourceTree = "<group>"; };
+		3E1390182D6E5F2B00A146C1 /* PeripheralManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeripheralManager.swift; sourceTree = "<group>"; };
+		3E1532412D6F93E70020F015 /* BasePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasePacket.swift; sourceTree = "<group>"; };
+		3E1532432D6F94E20020F015 /* AuthorizePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizePacket.swift; sourceTree = "<group>"; };
+		3E1532452D6F95A70020F015 /* CommandType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandType.swift; sourceTree = "<group>"; };
+		3E1532472D6F98CF0020F015 /* Crypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Crypto.swift; sourceTree = "<group>"; };
+		3E1532492D6FA0060020F015 /* Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
+		3E15324B2D6FA4250020F015 /* Int64.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Int64.swift; sourceTree = "<group>"; };
+		3E15A4772DA2B6E6007F7D3C /* EquilReservoirView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilReservoirView.swift; sourceTree = "<group>"; };
+		3E15A47B2DA2B718007F7D3C /* IdentifiableClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentifiableClass.swift; sourceTree = "<group>"; };
+		3E15A47D2DA2B723007F7D3C /* NibLoadable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NibLoadable.swift; sourceTree = "<group>"; };
+		3E15A47F2DA2B857007F7D3C /* EquilReservoirView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EquilReservoirView.xib; sourceTree = "<group>"; };
+		3E24AEBF2DA1639F00C7733C /* PumpImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpImage.swift; sourceTree = "<group>"; };
+		3E24AEC12DA1727800C7733C /* PatchPrimingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchPrimingView.swift; sourceTree = "<group>"; };
+		3E24AEC32DA1729A00C7733C /* PatchPrimingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchPrimingViewModel.swift; sourceTree = "<group>"; };
+		3E24AEC72DA17B4900C7733C /* PatchActivationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchActivationViewModel.swift; sourceTree = "<group>"; };
+		3E24AEC92DA17B7F00C7733C /* PatchActivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchActivationView.swift; sourceTree = "<group>"; };
+		3E26BE0A2D9069A600E595B0 /* EquilKitSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilKitSettings.swift; sourceTree = "<group>"; };
+		3E26BE0C2D906A0D00E595B0 /* EquilUI.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = EquilUI.xcassets; sourceTree = "<group>"; };
+		3E26BE0E2D906AE500E595B0 /* EquilKitSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilKitSettingsViewModel.swift; sourceTree = "<group>"; };
+		3E26BE102D906E5700E595B0 /* ReservoirView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservoirView.swift; sourceTree = "<group>"; };
+		3E3E78B42F6B2BA700DC4DF4 /* PatchDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDetailsView.swift; sourceTree = "<group>"; };
+		3E3E78B62F6B2C5C00DC4DF4 /* PatchDetailsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDetailsViewModel.swift; sourceTree = "<group>"; };
+		3E3E7BE12F6B35A500DC4DF4 /* PreviousPatchDetailsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviousPatchDetailsView.swift; sourceTree = "<group>"; };
+		3E3E7BE32F6B365100DC4DF4 /* PreviousPatchDetailsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviousPatchDetailsViewModel.swift; sourceTree = "<group>"; };
+		3E4566622D8371EB00FE1E0C /* ActivityViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityViewController.swift; sourceTree = "<group>"; };
+		3E4566642D837A4800FE1E0C /* Bundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bundle.swift; sourceTree = "<group>"; };
+		3E5060132D70E5C900376609 /* Crc8.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Crc8.swift; sourceTree = "<group>"; };
+		3E5060172D70EAF400376609 /* EquilWriteResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilWriteResult.swift; sourceTree = "<group>"; };
+		3E50601B2D70F69800376609 /* GetTimePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetTimePacket.swift; sourceTree = "<group>"; };
+		3E50601D2D70F7A700376609 /* Date.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date.swift; sourceTree = "<group>"; };
+		3E50601F2D70F97500376609 /* SetTimePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimePacket.swift; sourceTree = "<group>"; };
+		3E5060212D70FDA000376609 /* SetTimeZonePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimeZonePacket.swift; sourceTree = "<group>"; };
+		3E5060232D70FED500376609 /* SynchronizePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynchronizePacket.swift; sourceTree = "<group>"; };
+		3E5060252D71035900376609 /* SubscribePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscribePacket.swift; sourceTree = "<group>"; };
+		3E5FB2AB2FA62CA900E6151C /* CBUUID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CBUUID.swift; sourceTree = "<group>"; };
+		3E6A00ED2DA03FE00085E6A4 /* PatchDeactivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchDeactivationView.swift; sourceTree = "<group>"; };
+		3E6A00EF2DA042140085E6A4 /* DeactivatePatchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeactivatePatchViewModel.swift; sourceTree = "<group>"; };
+		3E6A00F12DA0428E0085E6A4 /* EquilDeactivatePatchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilDeactivatePatchResult.swift; sourceTree = "<group>"; };
+		3E6B082C2DF2224500A484C6 /* BasalScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasalScheduleTests.swift; sourceTree = "<group>"; };
+		3E767CE22D67ADFA004B1971 /* EquilKitPumpManager+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilKitPumpManager+UI.swift"; sourceTree = "<group>"; };
+		3E767CE42D67AF35004B1971 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
+		E1B001012D80D25D002648B0 /* EquilLogBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilLogBuffer.swift; sourceTree = "<group>"; };
+		3E767CFE2D67B1A9004B1971 /* EquilHUDProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilHUDProvider.swift; sourceTree = "<group>"; };
+		3E767D052D67B4A0004B1971 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3E767D432D67B790004B1971 /* EquilKitPlugin.loopplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = EquilKitPlugin.loopplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E767D4C2D67BA71004B1971 /* LoopKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E767D552D67BCC9004B1971 /* EquilKitUICoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilKitUICoordinator.swift; sourceTree = "<group>"; };
+		3E77FEB92D723AD200A15134 /* CryptoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoTests.swift; sourceTree = "<group>"; };
+		3E77FEBB2D72F8FC00A15134 /* EquilBasePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilBasePacketTests.swift; sourceTree = "<group>"; };
+		3E77FEBD2D7364A300A15134 /* ActivatePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivatePacket.swift; sourceTree = "<group>"; };
+		3E77FEC12D74B39300A15134 /* AlarmSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmSettings.swift; sourceTree = "<group>"; };
+		3E868C2C2F75BEE800ED6336 /* ClearAlertPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClearAlertPacket.swift; sourceTree = "<group>"; };
+		E1A001002D80D25D00264890 /* EquilDashboardTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilDashboardTypes.swift; sourceTree = "<group>"; };
+		E1A001012D80D25D00264891 /* EquilPumpManager+Dashboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilPumpManager+Dashboard.swift"; sourceTree = "<group>"; };
+		E1A001172D80D25D002648A2 /* EquilPumpManager+AlarmMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilPumpManager+AlarmMode.swift"; sourceTree = "<group>"; };
+		E1A001192D80D25D002648A3 /* EquilPumpManager+BackgroundKeepalive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilPumpManager+BackgroundKeepalive.swift"; sourceTree = "<group>"; };
+		E1A001072D80D25D00264893 /* EquilPumpManager+PatchLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilPumpManager+PatchLifecycle.swift"; sourceTree = "<group>"; };
+		3E92D5222DA458E500E22577 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		3E9547FA2D8D962D00EEF259 /* EquilPrimePatchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilPrimePatchResult.swift; sourceTree = "<group>"; };
+		3E9547FC2D8D9CCE00EEF259 /* EquilActivatePatchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilActivatePatchResult.swift; sourceTree = "<group>"; };
+		3E98B8502D6BB2B900DD5123 /* TimeInterval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeInterval.swift; sourceTree = "<group>"; };
+		3E9A5C952DA1460700A4102D /* PumpBaseSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpBaseSettingsView.swift; sourceTree = "<group>"; };
+		3E9A5C972DA1461600A4102D /* PumpBaseSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpBaseSettingsViewModel.swift; sourceTree = "<group>"; };
+		3E9D8B0B2D88A3EF00008AF2 /* EquilDoseProgressReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilDoseProgressReporter.swift; sourceTree = "<group>"; };
+		3E9D8B0F2D88A5EC00008AF2 /* UnfinalizedDose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnfinalizedDose.swift; sourceTree = "<group>"; };
+		3E9D8B112D88A8F100008AF2 /* NewPumpEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewPumpEvent.swift; sourceTree = "<group>"; };
+		3EA69F042D95E605002EEF9F /* InsulinTypeSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinTypeSelector.swift; sourceTree = "<group>"; };
+		3EA69F062D95ECDE002EEF9F /* PatchSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchSettingsView.swift; sourceTree = "<group>"; };
+		3EA6C4502DA2947000963AAB /* OnboardingWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWelcomeView.swift; sourceTree = "<group>"; };
+		3EA87C3A2DAC2DB300E897ED /* SynchronizeNotificationPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynchronizeNotificationPacketTests.swift; sourceTree = "<group>"; };
+		3EA87C3C2DAC2F9700E897ED /* NotificationPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPacket.swift; sourceTree = "<group>"; };
+		3EA87D4A2D7A214B007DD959 /* ActivatePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivatePacketTests.swift; sourceTree = "<group>"; };
+		3EA87D4C2D7A25E5007DD959 /* AuthorizePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizePacketTests.swift; sourceTree = "<group>"; };
+		3EA87D4E2D7A292A007DD959 /* CancelBolusPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelBolusPacket.swift; sourceTree = "<group>"; };
+		3EA87D502D7A29A1007DD959 /* CancelBolusPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelBolusPacketTests.swift; sourceTree = "<group>"; };
+		3EA87D522D7A2A2B007DD959 /* CancelTempBasalPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelTempBasalPacket.swift; sourceTree = "<group>"; };
+		3EA87D542D7A33A6007DD959 /* CancelTempBasalPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancelTempBasalPacketTests.swift; sourceTree = "<group>"; };
+		3EA87D582D7A35C7007DD959 /* ClearAlarmType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClearAlarmType.swift; sourceTree = "<group>"; };
+		3EA87D642D7A3DCA007DD959 /* GetTimePacketTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetTimePacketTest.swift; sourceTree = "<group>"; };
+		3EA87D6A2D7A4027007DD959 /* PrimePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimePacket.swift; sourceTree = "<group>"; };
+		3EA87D6C2D7A4046007DD959 /* PrimePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrimePacketTests.swift; sourceTree = "<group>"; };
+		3EB1A3B02D77843E0031C044 /* BasalSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasalSchedule.swift; sourceTree = "<group>"; };
+		3ED27C062DB67ED5001B7C95 /* EquilUpdatePatchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilUpdatePatchResult.swift; sourceTree = "<group>"; };
+		3ED27E062D80BA130026488B /* SetBolusPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetBolusPacketTests.swift; sourceTree = "<group>"; };
+		3ED27E082D80BAC50026488B /* SetPatchPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetPatchPacket.swift; sourceTree = "<group>"; };
+		3ED27E0A2D80BC900026488B /* SetPatchPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetPatchPacketTests.swift; sourceTree = "<group>"; };
+		3ED27E0C2D80BD4D0026488B /* SetTempBasalPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTempBasalPacket.swift; sourceTree = "<group>"; };
+		3ED27E0E2D80BFF40026488B /* SetTempBasalPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTempBasalPacketTests.swift; sourceTree = "<group>"; };
+		3ED27E102D80C42C0026488B /* SetTimePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimePacketTests.swift; sourceTree = "<group>"; };
+		3ED27E122D80C5BB0026488B /* SetTimeZonePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetTimeZonePacketTests.swift; sourceTree = "<group>"; };
+		3ED27E142D80C8FD0026488B /* StopPatchPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopPatchPacket.swift; sourceTree = "<group>"; };
+		3ED27E162D80C9EC0026488B /* StopPatchPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopPatchPacketTests.swift; sourceTree = "<group>"; };
+		3ED27E182D80CA350026488B /* SubscribePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscribePacketTests.swift; sourceTree = "<group>"; };
+		3ED27E1A2D80CABB0026488B /* SynchronizePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SynchronizePacketTests.swift; sourceTree = "<group>"; };
+		3ED27E1C2D80D15A0026488B /* AlarmState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmState.swift; sourceTree = "<group>"; };
+		3ED27E1E2D80D25D0026488B /* PatchState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchState.swift; sourceTree = "<group>"; };
+		F1A001012D80D25D0026488B /* EquilPumpManager+Scanning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilPumpManager+Scanning.swift"; sourceTree = "<group>"; };
+		F1A001032D80D25D0026488C /* EquilPairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilPairingView.swift; sourceTree = "<group>"; };
+		F1A001052D80D25D0026488D /* EquilPairingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilPairingViewModel.swift; sourceTree = "<group>"; };
+		3EDA29752D9B862800895031 /* PatchSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchSettingsViewModel.swift; sourceTree = "<group>"; };
+		3EE2DAC42D8A075B00EA2EAD /* SuspendPumpPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuspendPumpPacket.swift; sourceTree = "<group>"; };
+		3EE340B12E4D1C510040E346 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3EE340B32E4D1C6F0040E346 /* EquilKitPlugin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EquilKitPlugin.h; sourceTree = "<group>"; };
+		3EE340B52E4D1E740040E346 /* EquilKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EquilKit.h; sourceTree = "<group>"; };
+		3EEA51FA2D7E1BF2000C9E1E /* ResumePumpPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumePumpPacket.swift; sourceTree = "<group>"; };
+		3EEA51FC2D7E1C23000C9E1E /* ResumePumpPacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResumePumpPacketTests.swift; sourceTree = "<group>"; };
+		3EEA51FE2D7E1D0D000C9E1E /* SetBasalProfilePacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetBasalProfilePacket.swift; sourceTree = "<group>"; };
+		3EEA52002D7E1E0D000C9E1E /* SetBasalProfilePacketTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetBasalProfilePacketTests.swift; sourceTree = "<group>"; };
+		3EEA52062D7E2264000C9E1E /* SetBolusPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetBolusPacket.swift; sourceTree = "<group>"; };
+		3EF31CC52DF5DC5200EA6300 /* StateSyncer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateSyncer.swift; sourceTree = "<group>"; };
+		3EF5B06F2F79381400504678 /* AuthorizeBiometrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthorizeBiometrics.swift; sourceTree = "<group>"; };
+		3EFBC4F32DFB526900E0E295 /* DeleteDriverActionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteDriverActionSheet.swift; sourceTree = "<group>"; };
+		B6E9204F2EAFBB380076D719 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B7189AE52C15A52800703DE2 /* EquilPumpManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EquilPumpManager.swift; sourceTree = "<group>"; };
+		D0992F42637F4406AF944FCF /* EquilCommandQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilCommandQueue.swift; sourceTree = "<group>"; };
+
+		B7189AE92C15A8CE00703DE2 /* LoopKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B7D3A8D02C148CC4002EE003 /* EquilKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = EquilKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B7D3A8DA2C148CC4002EE003 /* EquilKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EquilKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B7D3A8ED2C14F0EF002EE003 /* EquilKitPlugin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EquilKitPlugin.swift; sourceTree = "<group>"; };
+		DD334CAB2F941CC90082A5B5 /* PatchLifetimeFormatting+Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PatchLifetimeFormatting+Helper.swift"; sourceTree = "<group>"; };
+		DD24F51597CD41249E32CBA4 /* EquilPumpManager+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EquilKitUI/EquilPumpManager+UI.swift"; sourceTree = "<group>"; };
+		AD64A9DBA5AB41249D6BE659 /* EquilUICoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilKitUI/ViewController/EquilUICoordinator.swift; sourceTree = "<group>"; };
+		597CDA1AC75F480EB98F63D2 /* BasalSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EquilKit/Commands/BasalSchedule.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3E767D402D67B790004B1971 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E98B84B2D6BB12C00DD5123 /* EquilKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8CD2C148CC4002EE003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E767D4D2D67BA71004B1971 /* LoopKitUI.framework in Frameworks */,
+				B7189AEA2C15A8CE00703DE2 /* LoopKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8D72C148CC4002EE003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B7D3A8DB2C148CC4002EE003 /* EquilKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3E1390132D6E5C4900A146C1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				3ED27C062DB67ED5001B7C95 /* EquilUpdatePatchResult.swift */,
+				3E6A00F12DA0428E0085E6A4 /* EquilDeactivatePatchResult.swift */,
+				3E9547FC2D8D9CCE00EEF259 /* EquilActivatePatchResult.swift */,
+				3E9547FA2D8D962D00EEF259 /* EquilPrimePatchResult.swift */,
+				3EB1A3B02D77843E0031C044 /* BasalSchedule.swift */,
+				3E5060172D70EAF400376609 /* EquilWriteResult.swift */,
+				3E1390162D6E5E9A00A146C1 /* EquilConnectResult.swift */,
+				3E1390142D6E5C5200A146C1 /* EquilScanResult.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		3E1532402D6F93DD0020F015 /* Packets */ = {
+			isa = PBXGroup;
+			children = (
+				3E77FEBD2D7364A300A15134 /* ActivatePacket.swift */,
+				3E1532432D6F94E20020F015 /* AuthorizePacket.swift */,
+				3EA87D4E2D7A292A007DD959 /* CancelBolusPacket.swift */,
+				3EA87D522D7A2A2B007DD959 /* CancelTempBasalPacket.swift */,
+				3E868C2C2F75BEE800ED6336 /* ClearAlertPacket.swift */,
+				3E50601B2D70F69800376609 /* GetTimePacket.swift */,
+				3EA87D6A2D7A4027007DD959 /* PrimePacket.swift */,
+				3EA87C3C2DAC2F9700E897ED /* NotificationPacket.swift */,
+				3EEA51FA2D7E1BF2000C9E1E /* ResumePumpPacket.swift */,
+				3EEA51FE2D7E1D0D000C9E1E /* SetBasalProfilePacket.swift */,
+				3EEA52062D7E2264000C9E1E /* SetBolusPacket.swift */,
+				3ED27E082D80BAC50026488B /* SetPatchPacket.swift */,
+				3ED27E0C2D80BD4D0026488B /* SetTempBasalPacket.swift */,
+				3E50601F2D70F97500376609 /* SetTimePacket.swift */,
+				3E5060212D70FDA000376609 /* SetTimeZonePacket.swift */,
+				3ED27E142D80C8FD0026488B /* StopPatchPacket.swift */,
+				3E5060252D71035900376609 /* SubscribePacket.swift */,
+				3EE2DAC42D8A075B00EA2EAD /* SuspendPumpPacket.swift */,
+				3E5060232D70FED500376609 /* SynchronizePacket.swift */,
+				3E1532452D6F95A70020F015 /* CommandType.swift */,
+				3E1532412D6F93E70020F015 /* BasePacket.swift */,
+				3E77FEC02D74B38B00A15134 /* Enums */,
+			);
+			path = Packets;
+			sourceTree = "<group>";
+		};
+		3E24AEC52DA1733300C7733C /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				DD334CAB2F941CC90082A5B5 /* PatchLifetimeFormatting+Helper.swift */,
+				3E3E78B62F6B2C5C00DC4DF4 /* PatchDetailsViewModel.swift */,
+				3E3E7BE32F6B365100DC4DF4 /* PreviousPatchDetailsViewModel.swift */,
+				3E26BE0E2D906AE500E595B0 /* EquilKitSettingsViewModel.swift */,
+				3EDA29752D9B862800895031 /* PatchSettingsViewModel.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		3E24AEC62DA1733C00C7733C /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				3E24AEC72DA17B4900C7733C /* PatchActivationViewModel.swift */,
+				3E9A5C972DA1461600A4102D /* PumpBaseSettingsViewModel.swift */,
+				3E6A00EF2DA042140085E6A4 /* DeactivatePatchViewModel.swift */,
+				3E24AEC32DA1729A00C7733C /* PatchPrimingViewModel.swift */,
+				F1A001052D80D25D0026488D /* EquilPairingViewModel.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		3E26BE092D90698A00E595B0 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				3E26BE0A2D9069A600E595B0 /* EquilKitSettings.swift */,
+				3EA69F042D95E605002EEF9F /* InsulinTypeSelector.swift */,
+				3EA69F062D95ECDE002EEF9F /* PatchSettingsView.swift */,
+				3E3E78B42F6B2BA700DC4DF4 /* PatchDetailsView.swift */,
+				3E3E7BE12F6B35A500DC4DF4 /* PreviousPatchDetailsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		3E45665A2D83712D00FE1E0C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3E6A00EB2DA03FCA0085E6A4 /* Onboarding */,
+				3E26BE092D90698A00E595B0 /* Settings */,
+				3E15A4772DA2B6E6007F7D3C /* EquilReservoirView.swift */,
+				3E15A47F2DA2B857007F7D3C /* EquilReservoirView.xib */,
+				3E0AD9B12F23FF2100958E94 /* ActivityIndicator.swift */,
+				3E26BE102D906E5700E595B0 /* ReservoirView.swift */,
+				3E24AEBF2DA1639F00C7733C /* PumpImage.swift */,
+				3EFBC4F32DFB526900E0E295 /* DeleteDriverActionSheet.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		3E45665F2D83719200FE1E0C /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				3E24AEC62DA1733C00C7733C /* Onboarding */,
+				3E24AEC52DA1733300C7733C /* Settings */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		3E5060122D70E5B000376609 /* Encryption */ = {
+			isa = PBXGroup;
+			children = (
+				3E5060132D70E5C900376609 /* Crc8.swift */,
+				3E1532472D6F98CF0020F015 /* Crypto.swift */,
+			);
+			path = Encryption;
+			sourceTree = "<group>";
+		};
+		3E6A00EB2DA03FCA0085E6A4 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				3E6A00ED2DA03FE00085E6A4 /* PatchDeactivationView.swift */,
+				3E9A5C952DA1460700A4102D /* PumpBaseSettingsView.swift */,
+				3E24AEC12DA1727800C7733C /* PatchPrimingView.swift */,
+				F1A001032D80D25D0026488C /* EquilPairingView.swift */,
+				3E24AEC92DA17B7F00C7733C /* PatchActivationView.swift */,
+				3EA6C4502DA2947000963AAB /* OnboardingWelcomeView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		3E6B082B2DF2223E00A484C6 /* PumpManager */ = {
+			isa = PBXGroup;
+			children = (
+				3E6B082C2DF2224500A484C6 /* BasalScheduleTests.swift */,
+			);
+			path = PumpManager;
+			sourceTree = "<group>";
+		};
+		3E767CE12D67AD91004B1971 /* EquilKitUI */ = {
+			isa = PBXGroup;
+			children = (
+				3E45665F2D83719200FE1E0C /* ViewModels */,
+				3E767D542D67BCC3004B1971 /* ViewController */,
+				3E45665A2D83712D00FE1E0C /* Views */,
+				3E767CFE2D67B1A9004B1971 /* EquilHUDProvider.swift */,
+				3E767CE22D67ADFA004B1971 /* EquilKitPumpManager+UI.swift */,
+				3EF5B06F2F79381400504678 /* AuthorizeBiometrics.swift */,
+				3E26BE0C2D906A0D00E595B0 /* EquilUI.xcassets */,
+			);
+			path = EquilKitUI;
+			sourceTree = "<group>";
+		};
+		3E767CE32D67AF2B004B1971 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				3E5FB2AB2FA62CA900E6151C /* CBUUID.swift */,
+				3E0406DF2EB7872C0013E362 /* Binding.swift */,
+				3E15A47D2DA2B723007F7D3C /* NibLoadable.swift */,
+				3E15A47B2DA2B718007F7D3C /* IdentifiableClass.swift */,
+				3E9D8B112D88A8F100008AF2 /* NewPumpEvent.swift */,
+				3E4566642D837A4800FE1E0C /* Bundle.swift */,
+				3E1532492D6FA0060020F015 /* Data.swift */,
+				3E50601D2D70F7A700376609 /* Date.swift */,
+				3E15324B2D6FA4250020F015 /* Int64.swift */,
+				3E98B8502D6BB2B900DD5123 /* TimeInterval.swift */,
+				3E767CE42D67AF35004B1971 /* OSLog.swift */,
+				E1B001012D80D25D002648B0 /* EquilLogBuffer.swift */,
+				3E9D8B0F2D88A5EC00008AF2 /* UnfinalizedDose.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		3E767D542D67BCC3004B1971 /* ViewController */ = {
+			isa = PBXGroup;
+			children = (
+				3E4566622D8371EB00FE1E0C /* ActivityViewController.swift */,
+				3E767D552D67BCC9004B1971 /* EquilKitUICoordinator.swift */,
+			);
+			path = ViewController;
+			sourceTree = "<group>";
+		};
+		3E77FEB82D723ABF00A15134 /* Encryption */ = {
+			isa = PBXGroup;
+			children = (
+				3E77FEB92D723AD200A15134 /* CryptoTests.swift */,
+			);
+			path = Encryption;
+			sourceTree = "<group>";
+		};
+		3E77FEBF2D74B16100A15134 /* Packets */ = {
+			isa = PBXGroup;
+			children = (
+				3EA87D4A2D7A214B007DD959 /* ActivatePacketTests.swift */,
+				3EA87D4C2D7A25E5007DD959 /* AuthorizePacketTests.swift */,
+				3EA87D502D7A29A1007DD959 /* CancelBolusPacketTests.swift */,
+				3EA87D542D7A33A6007DD959 /* CancelTempBasalPacketTests.swift */,
+				3EA87D642D7A3DCA007DD959 /* GetTimePacketTest.swift */,
+				3EA87D6C2D7A4046007DD959 /* PrimePacketTests.swift */,
+				3EEA51FC2D7E1C23000C9E1E /* ResumePumpPacketTests.swift */,
+				3EEA52002D7E1E0D000C9E1E /* SetBasalProfilePacketTests.swift */,
+				3ED27E062D80BA130026488B /* SetBolusPacketTests.swift */,
+				3ED27E0A2D80BC900026488B /* SetPatchPacketTests.swift */,
+				3ED27E0E2D80BFF40026488B /* SetTempBasalPacketTests.swift */,
+				3ED27E102D80C42C0026488B /* SetTimePacketTests.swift */,
+				3ED27E122D80C5BB0026488B /* SetTimeZonePacketTests.swift */,
+				3ED27E162D80C9EC0026488B /* StopPatchPacketTests.swift */,
+				3ED27E182D80CA350026488B /* SubscribePacketTests.swift */,
+				3ED27E1A2D80CABB0026488B /* SynchronizePacketTests.swift */,
+				3EA87C3A2DAC2DB300E897ED /* SynchronizeNotificationPacketTests.swift */,
+				3E77FEBB2D72F8FC00A15134 /* EquilBasePacketTests.swift */,
+			);
+			path = Packets;
+			sourceTree = "<group>";
+		};
+		3E77FEC02D74B38B00A15134 /* Enums */ = {
+			isa = PBXGroup;
+			children = (
+				3E77FEC12D74B39300A15134 /* AlarmSettings.swift */,
+				3ED27E1C2D80D15A0026488B /* AlarmState.swift */,
+				3E0489042D74B81D00E0B75A /* BasalType.swift */,
+				3EA87D582D7A35C7007DD959 /* ClearAlarmType.swift */,
+				3ED27E1E2D80D25D0026488B /* PatchState.swift */,
+			);
+			path = Enums;
+			sourceTree = "<group>";
+		};
+		B6E920442EAFB8C20076D719 /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				B6E9204F2EAFBB380076D719 /* Localizable.xcstrings */,
+			);
+			path = Localization;
+			sourceTree = "<group>";
+		};
+		B7189AE62C15A52800703DE2 /* PumpManager */ = {
+			isa = PBXGroup;
+			children = (
+				3E1390132D6E5C4900A146C1 /* Models */,
+				3E1390112D6E59B000A146C1 /* EquilPumpState.swift */,
+				B7189AE52C15A52800703DE2 /* EquilPumpManager.swift */,
+				E1A001012D80D25D00264891 /* EquilPumpManager+Dashboard.swift */,
+				E1A001172D80D25D002648A2 /* EquilPumpManager+AlarmMode.swift */,
+				E1A001192D80D25D002648A3 /* EquilPumpManager+BackgroundKeepalive.swift */,
+				E1A001072D80D25D00264893 /* EquilPumpManager+PatchLifecycle.swift */,
+				E1A001002D80D25D00264890 /* EquilDashboardTypes.swift */,
+				F1A001012D80D25D0026488B /* EquilPumpManager+Scanning.swift */,
+				D0992F42637F4406AF944FCF /* EquilCommandQueue.swift */,
+				3E13900F2D6E534600A146C1 /* BluetoothManager.swift */,
+				3E1390182D6E5F2B00A146C1 /* PeripheralManager.swift */,
+				3E9D8B0B2D88A3EF00008AF2 /* EquilDoseProgressReporter.swift */,
+				3E92D5222DA458E500E22577 /* NotificationManager.swift */,
+				3EF31CC52DF5DC5200EA6300 /* StateSyncer.swift */,
+			);
+			path = PumpManager;
+			sourceTree = "<group>";
+		};
+		B7189AE82C15A8CE00703DE2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3E767D4C2D67BA71004B1971 /* LoopKitUI.framework */,
+				B7189AE92C15A8CE00703DE2 /* LoopKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		B7D3A8C62C148CC4002EE003 = {
+			isa = PBXGroup;
+			children = (
+				B6E920442EAFB8C20076D719 /* Localization */,
+				3E767CE32D67AF2B004B1971 /* Common */,
+				B7D3A8D22C148CC4002EE003 /* EquilKit */,
+				3E767CE12D67AD91004B1971 /* EquilKitUI */,
+				B7D3A8EE2C14F0EF002EE003 /* EquilKitPlugin */,
+				B7D3A8DE2C148CC4002EE003 /* EquilKitTests */,
+				B7D3A8D12C148CC4002EE003 /* Products */,
+				B7189AE82C15A8CE00703DE2 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		B7D3A8D12C148CC4002EE003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B7D3A8D02C148CC4002EE003 /* EquilKit.framework */,
+				B7D3A8DA2C148CC4002EE003 /* EquilKitTests.xctest */,
+				3E767D432D67B790004B1971 /* EquilKitPlugin.loopplugin */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B7D3A8D22C148CC4002EE003 /* EquilKit */ = {
+			isa = PBXGroup;
+			children = (
+				3E5060122D70E5B000376609 /* Encryption */,
+				3E1532402D6F93DD0020F015 /* Packets */,
+				B7189AE62C15A52800703DE2 /* PumpManager */,
+				3E767D052D67B4A0004B1971 /* Info.plist */,
+				3EE340B52E4D1E740040E346 /* EquilKit.h */,
+			);
+			path = EquilKit;
+			sourceTree = "<group>";
+		};
+		B7D3A8DE2C148CC4002EE003 /* EquilKitTests */ = {
+			isa = PBXGroup;
+			children = (
+				3E6B082B2DF2223E00A484C6 /* PumpManager */,
+				3E77FEBF2D74B16100A15134 /* Packets */,
+				3E77FEB82D723ABF00A15134 /* Encryption */,
+			);
+			path = EquilKitTests;
+			sourceTree = "<group>";
+		};
+		B7D3A8EE2C14F0EF002EE003 /* EquilKitPlugin */ = {
+			isa = PBXGroup;
+			children = (
+				3EE340B32E4D1C6F0040E346 /* EquilKitPlugin.h */,
+				3EE340B12E4D1C510040E346 /* Info.plist */,
+				B7D3A8ED2C14F0EF002EE003 /* EquilKitPlugin.swift */,
+			);
+			path = EquilKitPlugin;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		3E767D3E2D67B790004B1971 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3EE340B42E4D1C6F0040E346 /* EquilKitPlugin.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8CB2C148CC4002EE003 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3EE340B62E4D1E740040E346 /* EquilKit.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		3E767D422D67B790004B1971 /* EquilKitPlugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3E767D482D67B790004B1971 /* Build configuration list for PBXNativeTarget "EquilKitPlugin" */;
+			buildPhases = (
+				3E767D3E2D67B790004B1971 /* Headers */,
+				3E767D3F2D67B790004B1971 /* Sources */,
+				3E767D402D67B790004B1971 /* Frameworks */,
+				3E767D412D67B790004B1971 /* Resources */,
+				3E98B84F2D6BB12C00DD5123 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3E98B84E2D6BB12C00DD5123 /* PBXTargetDependency */,
+			);
+			name = EquilKitPlugin;
+			packageProductDependencies = (
+			);
+			productName = EquilKitPlugin;
+			productReference = 3E767D432D67B790004B1971 /* EquilKitPlugin.loopplugin */;
+			productType = "com.apple.product-type.framework";
+		};
+		B7D3A8CF2C148CC4002EE003 /* EquilKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7D3A8E42C148CC4002EE003 /* Build configuration list for PBXNativeTarget "EquilKit" */;
+			buildPhases = (
+				B7D3A8CB2C148CC4002EE003 /* Headers */,
+				B7D3A8CC2C148CC4002EE003 /* Sources */,
+				B7D3A8CD2C148CC4002EE003 /* Frameworks */,
+				B7D3A8CE2C148CC4002EE003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EquilKit;
+			productName = EquilKit;
+			productReference = B7D3A8D02C148CC4002EE003 /* EquilKit.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		B7D3A8D92C148CC4002EE003 /* EquilKitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7D3A8E72C148CC4002EE003 /* Build configuration list for PBXNativeTarget "EquilKitTests" */;
+			buildPhases = (
+				B7D3A8D62C148CC4002EE003 /* Sources */,
+				B7D3A8D72C148CC4002EE003 /* Frameworks */,
+				B7D3A8D82C148CC4002EE003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B7D3A8DD2C148CC4002EE003 /* PBXTargetDependency */,
+			);
+			name = EquilKitTests;
+			productName = EquilKitTests;
+			productReference = B7D3A8DA2C148CC4002EE003 /* EquilKitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B7D3A8C72C148CC4002EE003 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					3E767D422D67B790004B1971 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					B7D3A8CF2C148CC4002EE003 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					B7D3A8D92C148CC4002EE003 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+				};
+			};
+			buildConfigurationList = B7D3A8CA2C148CC4002EE003 /* Build configuration list for PBXProject "EquilKit" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				ar,
+				"zh-Hans",
+				cs,
+				da,
+				nl,
+				fi,
+				fr,
+				de,
+				he,
+				hu,
+				ko,
+				it,
+				ja,
+				nb,
+				pl,
+				"pt-BR",
+				ro,
+				ru,
+				sk,
+				es,
+				sv,
+				tr,
+				uk,
+				vi,
+			);
+			mainGroup = B7D3A8C62C148CC4002EE003;
+			productRefGroup = B7D3A8D12C148CC4002EE003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B7D3A8CF2C148CC4002EE003 /* EquilKit */,
+				B7D3A8D92C148CC4002EE003 /* EquilKitTests */,
+				3E767D422D67B790004B1971 /* EquilKitPlugin */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3E767D412D67B790004B1971 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8CE2C148CC4002EE003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E26BE0D2D906A0D00E595B0 /* EquilUI.xcassets in Resources */,
+				B6E920502EAFBB390076D719 /* Localizable.xcstrings in Resources */,
+				3E15A4802DA2B857007F7D3C /* EquilReservoirView.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8D82C148CC4002EE003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3E767D3F2D67B790004B1971 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3EE340AE2E4D1A880040E346 /* EquilKitPlugin.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8CC2C148CC4002EE003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000AEC0B6D374221B8E01125 /* EquilUICoordinator.swift in Sources */,
+				0179EEAE33C741D497A45EB9 /* EquilBLEManager.swift in Sources */,
+				05F11D5B91F7431EA1A16B12 /* CmdPair.swift in Sources */,
+				0B87F1A66815407782B28ADE /* BasalSchedule.swift in Sources */,
+				0FD95C2D572847579D8C9099 /* CmdRunningModeGet.swift in Sources */,
+				1DF693C2198A4066A2830BA3 /* CmdBasalGet.swift in Sources */,
+				20726FB6F61A4D03842CFA56 /* CmdUnPair.swift in Sources */,
+				20AE1AB4D2934402B827EA8C /* EquilCommandQueue.swift in Sources */,
+				28E5D1E5B42A4808BC84EEE5 /* CmdAlarmSet.swift in Sources */,
+				2BD0D984DEF4495FA34EB1D8 /* EquilBaseSetting.swift in Sources */,
+				2C459174BA8F4D1DAA191F80 /* PumpEvent.swift in Sources */,
+				2D928D1E03274A62B9EEF8F4 /* RunMode.swift in Sources */,
+				2F521BB2A7C64DBAA57D3A3B /* CmdModelSet.swift in Sources */,
+				369A346D2BFF408286D69735 /* AlarmMode.swift in Sources */,
+				3E77FEC22D74B39300A15134 /* AlarmSettings.swift in Sources */,
+				3E1390122D6E59B500A146C1 /* EquilPumpState.swift in Sources */,
+				3E1532482D6F98D20020F015 /* Crypto.swift in Sources */,
+				3E15324A2D6FA0080020F015 /* Data.swift in Sources */,
+				3E15324C2D6FA4280020F015 /* Int64.swift in Sources */,
+				3E15A47C2DA2B718007F7D3C /* IdentifiableClass.swift in Sources */,
+				3E4566652D837A4900FE1E0C /* Bundle.swift in Sources */,
+				3E50601E2D70F7A900376609 /* Date.swift in Sources */,
+				3E767D032D67B319004B1971 /* OSLog.swift in Sources */,
+				E1B001022D80D25D002648B0 /* EquilLogBuffer.swift in Sources */,
+				3E767D532D67BC33004B1971 /* EquilHUDProvider.swift in Sources */,
+				3E98B8512D6BB2BC00DD5123 /* TimeInterval.swift in Sources */,
+				3E9D8B0C2D88A3FA00008AF2 /* EquilDoseProgressReporter.swift in Sources */,
+				3E9D8B102D88A5F200008AF2 /* UnfinalizedDose.swift in Sources */,
+				3E9D8B122D88A8F600008AF2 /* NewPumpEvent.swift in Sources */,
+				50E5CFA75F944C08B329C024 /* EquilConst.swift in Sources */,
+				52D4FD90EF744D3CB7EDBE79 /* CmdStepSet.swift in Sources */,
+				530DCC6FDF3B4E00B9DC2E6D /* EquilFraming.swift in Sources */,
+				657DC155310141E4BD904FB9 /* CmdDevicesOldGet.swift in Sources */,
+				7180E228D19148EC879F92C4 /* CmdLargeBasalSet.swift in Sources */,
+				73062967CF444742A5C98F75 /* CmdTempBasalSet.swift in Sources */,
+				7F7D372D732741E88158D089 /* EquilBaseCmd.swift in Sources */,
+				87D89CD321AF4FF0A9BDBF9E /* CmdDevicesGet.swift in Sources */,
+				8F78345128D94E5ABCE577D4 /* EquilPumpManager+UI.swift in Sources */,
+				AB1C168539764BD1850223CB /* EquilCommandRunner.swift in Sources */,
+				ADB583760E1D4714AC62FCEA /* ActivationProgress.swift in Sources */,
+				ADDDA3AC69CF4A70AA3CE4B1 /* CmdBasalSet.swift in Sources */,
+				B7189AE72C15A52800703DE2 /* EquilPumpManager.swift in Sources */,
+				BBD1F04F15564CE98125B394 /* CmdResistanceGet.swift in Sources */,
+				BC721E8DE4BC4399B56BF117 /* CmdHistoryGet.swift in Sources */,
+				CB1B4111B92D4CB2A4BEFAFA /* AESUtil.swift in Sources */,
+				D21270879ABB4965B7D2BBF5 /* CmdSettingSet.swift in Sources */,
+				DE5BB758580D478FAFD1522E /* CmdExtendedBolusSet.swift in Sources */,
+				DFD9E26F10644A7E9A65CAAB /* EquilUtils.swift in Sources */,
+				EA0FEB134D694A0589041113 /* Crc.swift in Sources */,
+				EAFA90C0FCE14600B772D8B2 /* CmdTimeSet.swift in Sources */,
+				EEDDE0ED4AA44BD8AD793F44 /* CmdInsulinChange.swift in Sources */,
+				EEDEFDA74732463A8B170068 /* CmdInsulinGet.swift in Sources */,
+				FCDF96634A214B339B43898D /* CmdTempBasalGet.swift in Sources */,
+				3E9547FB2D8D963600EEF259 /* EquilPrimePatchResult.swift in Sources */,
+				3E9547FD2D8D9CD600EEF259 /* EquilActivatePatchResult.swift in Sources */,
+				3E6A00F22DA0428E0085E6A4 /* EquilDeactivatePatchResult.swift in Sources */,
+				3ED27C072DB67ED5001B7C95 /* EquilUpdatePatchResult.swift in Sources */,
+				3ED27E1F2D80D25D0026488C /* PatchState.swift in Sources */,
+				F1A001022D80D25D0026488B /* EquilPumpManager+Scanning.swift in Sources */,
+				F1A001042D80D25D0026488C /* EquilPairingView.swift in Sources */,
+				F1A001062D80D25D0026488D /* EquilPairingViewModel.swift in Sources */,
+				E1A001012D80D25D0026488E /* EquilKitSettings.swift in Sources */,
+				E1A001022D80D25D0026488F /* EquilKitSettingsViewModel.swift in Sources */,
+				3EFBC4F42DFB527400E0E295 /* DeleteDriverActionSheet.swift in Sources */,
+				DD334CAC2F941CC90082A5B5 /* PatchLifetimeFormatting+Helper.swift in Sources */,
+				3E24AEC02DA1639F00C7733C /* PumpImage.swift in Sources */,
+				3E26BE112D906E5700E595B0 /* ReservoirView.swift in Sources */,
+				3E4566632D8371EC00FE1E0C /* ActivityViewController.swift in Sources */,
+				3E4566652D837A4900FE1E0C /* Bundle.swift in Sources */,
+				3E0AD9B22F23FF2500958E94 /* ActivityIndicator.swift in Sources */,
+				3E0406E02EB7872E0013E362 /* Binding.swift in Sources */,
+				E1A001032D80D25D00264890 /* EquilDashboardTypes.swift in Sources */,
+				E1A001042D80D25D00264891 /* EquilPumpManager+Dashboard.swift in Sources */,
+				E1A001162D80D25D002648A2 /* EquilPumpManager+AlarmMode.swift in Sources */,
+				E1A001182D80D25D002648A3 /* EquilPumpManager+BackgroundKeepalive.swift in Sources */,
+				E1A001062D80D25D00264893 /* EquilPumpManager+PatchLifecycle.swift in Sources */,
+				E1A001082D80D25D00264894 /* PatchPrimingView.swift in Sources */,
+				E1A001092D80D25D00264895 /* PatchPrimingViewModel.swift in Sources */,
+				E1A0010A2D80D25D00264896 /* PatchActivationView.swift in Sources */,
+				E1A0010B2D80D25D00264897 /* PatchActivationViewModel.swift in Sources */,
+				E1A0010C2D80D25D00264898 /* PumpBaseSettingsView.swift in Sources */,
+				E1A0010D2D80D25D00264899 /* PumpBaseSettingsViewModel.swift in Sources */,
+				E1A0010E2D80D25D0026489A /* PatchSettingsView.swift in Sources */,
+				E1A0010F2D80D25D0026489B /* PatchSettingsViewModel.swift in Sources */,
+				E1A001102D80D25D0026489C /* PatchDetailsView.swift in Sources */,
+				E1A001112D80D25D0026489D /* PatchDetailsViewModel.swift in Sources */,
+				E1A001122D80D25D0026489E /* PreviousPatchDetailsView.swift in Sources */,
+				E1A001132D80D25D0026489F /* PreviousPatchDetailsViewModel.swift in Sources */,
+				E1A001142D80D25D002648A0 /* OnboardingWelcomeView.swift in Sources */,
+				E1A001152D80D25D002648A1 /* NotificationManager.swift in Sources */,
+				3E6A00EE2DA03FE00085E6A4 /* PatchDeactivationView.swift in Sources */,
+				3E6A00F02DA0421A0085E6A4 /* DeactivatePatchViewModel.swift in Sources */,
+				3EA69F052D95E605002EEF9F /* InsulinTypeSelector.swift in Sources */,
+				3EF5B0702F79381B00504678 /* AuthorizeBiometrics.swift in Sources */,
+
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B7D3A8D62C148CC4002EE003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3ED27E132D80C5BD0026488B /* SetTimeZonePacketTests.swift in Sources */,
+				3EA87D512D7A29A4007DD959 /* CancelBolusPacketTests.swift in Sources */,
+				3ED27E0B2D80BC960026488B /* SetPatchPacketTests.swift in Sources */,
+				3EA87D6D2D7A404C007DD959 /* PrimePacketTests.swift in Sources */,
+				3EA87D652D7A3DCE007DD959 /* GetTimePacketTest.swift in Sources */,
+				3ED27E192D80CA3B0026488B /* SubscribePacketTests.swift in Sources */,
+				3ED27E112D80C4320026488B /* SetTimePacketTests.swift in Sources */,
+				3EA87C3B2DAC2DBE00E897ED /* SynchronizeNotificationPacketTests.swift in Sources */,
+				3E6B082D2DF2224900A484C6 /* BasalScheduleTests.swift in Sources */,
+				3ED27E0F2D80BFF90026488B /* SetTempBasalPacketTests.swift in Sources */,
+				3ED27E072D80BA130026488B /* SetBolusPacketTests.swift in Sources */,
+				3EEA51FD2D7E1C27000C9E1E /* ResumePumpPacketTests.swift in Sources */,
+				3EA87D4B2D7A2165007DD959 /* ActivatePacketTests.swift in Sources */,
+				3EA87D552D7A33AD007DD959 /* CancelTempBasalPacketTests.swift in Sources */,
+				3E77FEBC2D72F90000A15134 /* EquilBasePacketTests.swift in Sources */,
+				3E77FEBA2D723AD400A15134 /* CryptoTests.swift in Sources */,
+				3ED27E172D80C9ED0026488B /* StopPatchPacketTests.swift in Sources */,
+				3EEA52012D7E1E10000C9E1E /* SetBasalProfilePacketTests.swift in Sources */,
+				3ED27E1B2D80CAC40026488B /* SynchronizePacketTests.swift in Sources */,
+				3EA87D4D2D7A25ED007DD959 /* AuthorizePacketTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3E98B84E2D6BB12C00DD5123 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = B7D3A8CF2C148CC4002EE003 /* EquilKit */;
+			targetProxy = 3E98B84D2D6BB12C00DD5123 /* PBXContainerItemProxy */;
+		};
+		B7D3A8DD2C148CC4002EE003 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B7D3A8CF2C148CC4002EE003 /* EquilKit */;
+			targetProxy = B7D3A8DC2C148CC4002EE003 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3E767D492D67B790004B1971 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EquilKitPlugin/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = org.nightscout.EquilKitPlugin;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				WRAPPER_EXTENSION = loopplugin;
+			};
+			name = Debug;
+		};
+		3E767D4A2D67B790004B1971 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EquilKitPlugin/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = org.nightscout.EquilKitPlugin;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				WRAPPER_EXTENSION = loopplugin;
+			};
+			name = Release;
+		};
+		B7D3A8E22C148CC4002EE003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		B7D3A8E32C148CC4002EE003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		B7D3A8E52C148CC4002EE003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = DF6M6737H2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EquilKit/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = org.nightscout.EquilKit;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited) MEDTRUM_DEBUG_LOGS";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B7D3A8E62C148CC4002EE003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = DF6M6737H2;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EquilKit/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
+				MARKETING_VERSION = 1.0;
+				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
+				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
+				PRODUCT_BUNDLE_IDENTIFIER = org.nightscout.EquilKit;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_INSTALL_OBJC_HEADER = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B7D3A8E82C148CC4002EE003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DF6M6737H2;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.nightscout.EquilKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B7D3A8E92C148CC4002EE003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = DF6M6737H2;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.nightscout.EquilKitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3E767D482D67B790004B1971 /* Build configuration list for PBXNativeTarget "EquilKitPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E767D492D67B790004B1971 /* Debug */,
+				3E767D4A2D67B790004B1971 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B7D3A8CA2C148CC4002EE003 /* Build configuration list for PBXProject "EquilKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B7D3A8E22C148CC4002EE003 /* Debug */,
+				B7D3A8E32C148CC4002EE003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B7D3A8E42C148CC4002EE003 /* Build configuration list for PBXNativeTarget "EquilKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B7D3A8E52C148CC4002EE003 /* Debug */,
+				B7D3A8E62C148CC4002EE003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B7D3A8E72C148CC4002EE003 /* Build configuration list for PBXNativeTarget "EquilKitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B7D3A8E82C148CC4002EE003 /* Debug */,
+				B7D3A8E92C148CC4002EE003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B7D3A8C72C148CC4002EE003 /* Project object */;
+}

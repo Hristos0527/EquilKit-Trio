@@ -1,0 +1,358 @@
+import CoreBluetooth
+
+class BluetoothManager: NSObject, CBCentralManagerDelegate {
+    public var pumpManager: EquilPumpManager?
+
+    let logger = EquilLogger(category: "BluetoothManager")
+
+    var manager: CBCentralManager!
+    let managerQueue = DispatchQueue(label: "com.nightscout.EquilKit.bluetoothManagerQueue", qos: .unspecified)
+
+    private var peripheral: CBPeripheral?
+    private var peripheralManager: PeripheralManager?
+    private var forcedDisconnect: Bool = false
+
+    var scanCompletion: ((EquilScanResult) -> Void)?
+    var connectCompletion: ((EquilConnectError?) -> Void)?
+    var connectionTimeout: Task<Void, Never>?
+
+    public var isConnected: Bool {
+        if let peripheral = peripheral, peripheral.state == .connected {
+            return true
+        }
+
+        return false
+    }
+
+    override init() {
+        super.init()
+
+        managerQueue.sync {
+            self.manager = CBCentralManager(
+                delegate: self,
+                queue: managerQueue,
+                options: [CBCentralManagerOptionRestoreIdentifierKey: "com.nightscout.EquilKit.bluetoothManager"]
+            )
+        }
+    }
+
+    func startScan(_ completion: @escaping (_ result: EquilScanResult) -> Void) {
+        if let pumpManager = self.pumpManager, pumpManager.state.pumpSN.isEmpty {
+            completion(.failure(error: .noSerialNumberAvailable))
+            return
+        }
+        guard manager.state == .poweredOn else {
+            completion(.failure(error: .invalidBluetoothState(state: manager.state)))
+            return
+        }
+
+        if !manager.isScanning {
+            manager.stopScan()
+        }
+
+        scanCompletion = completion
+        manager.scanForPeripherals(withServices: [])
+
+        logger.info("Started scanning")
+        // TODO: Add scan timeout - 15s?
+    }
+
+    private func connect(peripheral: CBPeripheral) {
+        if manager.isScanning {
+            manager.stopScan()
+            scanCompletion = nil
+        }
+
+        logger.info("Connecting to \(peripheral)")
+
+        self.peripheral = peripheral
+        manager.connect(peripheral)
+    }
+
+    func ensureConnected(_ completionAsync: @escaping (EquilConnectError?) async -> Void) {
+        guard connectCompletion == nil else {
+            logger.error("EnsureConnected is already running...")
+            Task {
+                await completionAsync(.failedToConnectToDevice)
+            }
+            return
+        }
+
+        connectCompletion = { (_ result: EquilConnectError?) -> Void in
+            Task {
+                self.connectCompletion = nil
+                self.connectionTimeout?.cancel()
+                self.connectionTimeout = nil
+                await completionAsync(result)
+            }
+        }
+
+        if let peripheral = peripheral, peripheral.state == .connected {
+            logger.debug("Already connect!")
+            connectCompletion?(nil)
+            return
+        }
+
+        if let peripheral = peripheral {
+            // We've the peripheral reference to a previous connection
+            // Just try to reconnect
+            startTimeout(seconds: .seconds(15))
+            connect(peripheral: peripheral)
+            return
+        }
+
+        let connectedDevices = manager.retrieveConnectedPeripherals(withServices: [CBUUID.SERVICE_UUID])
+        if let peripheral = connectedDevices.first(where: { $0.name == "MT" }) {
+            // Phone is already connected, but the app is not
+            startTimeout(seconds: .seconds(15))
+            connect(peripheral: peripheral)
+            return
+        }
+
+        guard var pumpSNState = pumpManager?.state.pumpSN else {
+            logger.error("No pump serial number found")
+            connectCompletion?(.failedToFindDevice)
+            return
+        }
+
+        pumpSNState = Data(pumpSNState.reversed())
+
+        // We are disconnected and have no reference to the previous connection
+        // Start to scan for patch and reconnect the long way
+        startTimeout(seconds: .seconds(15))
+        startScan { result in
+            switch result {
+            case let .failure(error):
+                self.logger.error("Error during scanning: \(error.localizedDescription)")
+                self.manager.stopScan()
+                self.connectCompletion?(.failedToFindDevice)
+
+            case let .success(peripheral, pumpSN, _, _):
+                guard pumpSN == pumpSNState else {
+                    // Other patch pump found. IGNORE
+                    return
+                }
+
+                self.connect(peripheral: peripheral)
+            }
+        }
+    }
+
+    func startTimeout(seconds: TimeInterval) {
+        connectionTimeout = Task {
+            do {
+                try await Task.sleep(nanoseconds: UInt64(seconds) * 1_000_000_000)
+                guard let connectionCallback = self.connectCompletion else {
+                    // This is amazing, we've done what we must and continue our live :)
+                    return
+                }
+
+                if let peripheral = self.peripheral, peripheral.state == .connected {
+                    // This is amazing, we've done what we must and continue our live :)
+                    return
+                }
+
+                self.logger.error("Failed to connect: Timeout reached...")
+
+                if self.manager.isScanning {
+                    self.manager.stopScan()
+                    self.scanCompletion = nil
+                }
+
+                connectionCallback(.failedToConnectToDevice)
+                self.connectCompletion = nil
+            } catch {}
+        }
+    }
+
+    func write(_ packet: any MedtrumBasePacketProtocol) async -> EquilWriteResult<Any> {
+        guard let peripheralManager else {
+            return .failure(error: .noManager)
+        }
+
+        return await peripheralManager.writePacket(packet)
+    }
+
+    func disconnect(force: Bool = false) {
+        forcedDisconnect = force
+
+        if let peripheral, peripheral.state == .connected {
+            manager.cancelPeripheralConnection(peripheral)
+        }
+
+        if force {
+            clearPeripheral()
+        }
+    }
+
+    func clearPeripheral() {
+        peripheral = nil
+        peripheralManager = nil
+    }
+}
+
+extension BluetoothManager {
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        logger.info("\(String(describing: central.state.rawValue))")
+
+        guard central.state == .poweredOn else {
+            return
+        }
+
+        if let peripheral = self.peripheral {
+            logger.info("Reconnecting to restored state...")
+            connectCompletion = { (error: EquilConnectError?) -> Void in
+                if let error = error {
+                    self.logger.error("Failed to restore state: \(error)")
+                } else {
+                    self.logger.info("Restored state!")
+                }
+
+                self.connectCompletion = nil
+            }
+
+            connect(peripheral: peripheral)
+            return
+        }
+
+        if !isConnected, pumpManager?.state.pumpState == .active {
+            ensureConnected { error in
+                if let error = error {
+                    self.logger.error("Failed to auto reconnect on boot: \(error)")
+                }
+            }
+        }
+    }
+
+    func centralManager(
+        _: CBCentralManager,
+        didDiscover peripheral: CBPeripheral,
+        advertisementData: [String: Any],
+        rssi _: NSNumber
+    ) {
+        guard let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String, !name.isEmpty, name == "MT" else {
+            return
+        }
+
+        let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey]
+        guard let manufacturerData = manufacturerData as? Data, manufacturerData.count >= 7 else {
+            // Simulator bypass -> 200u
+            scanCompletion?(
+                .success(
+                    peripheral: peripheral,
+                    pumpSN: Data([0x28, 0xD8, 0x12, 0x4A]),
+                    deviceType: 1,
+                    version: 1
+                )
+            )
+            // Simulator bypass -> 300u
+            scanCompletion?(
+                .success(
+                    peripheral: peripheral,
+                    pumpSN: Data([0x14, 0x16, 0xDF, 0x52]),
+                    deviceType: 1,
+                    version: 1
+                )
+            )
+            return
+        }
+
+        // Index:
+        // 0 & 1 -> Manufacturer ID
+        // 2-5 -> PumpSN
+        // 6 -> Device type
+        // 7 -> Version
+        scanCompletion?(
+            .success(
+                peripheral: peripheral,
+                pumpSN: manufacturerData[2 ..< 6],
+                deviceType: manufacturerData[6],
+                version: manufacturerData[7]
+            )
+        )
+    }
+
+    func centralManager(_: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        logger.info("Connected to pump: \(peripheral.name ?? "<NO_NAME>")!")
+
+        guard let pumpManager = pumpManager else {
+            logger.warning("No pumpManager...")
+            return
+        }
+        guard let completion = connectCompletion else {
+            logger.warning("No connectCompletion...")
+            return
+        }
+
+        connectionTimeout?.cancel()
+        forcedDisconnect = false
+
+        self.peripheral = peripheral
+        peripheralManager = PeripheralManager(peripheral, self, pumpManager, completion)
+        peripheral.discoverServices([CBUUID.SERVICE_UUID])
+    }
+
+    func centralManager(_ centralManager: CBCentralManager, willRestoreState dict: [String: Any]) {
+        let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] ?? []
+        guard let peripheral = peripherals.first else {
+            logger.warning("No restored peripherals!")
+            return
+        }
+
+        if peripheral.services?.first(where: { $0.uuid == CBUUID.SERVICE_UUID }) == nil {
+            logger.warning("Couldnt restore state, since no service is available...")
+            centralManager.cancelPeripheralConnection(peripheral)
+            return
+        }
+
+        self.peripheral = peripheral
+    }
+
+    func centralManager(_: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        logger
+            .info(
+                "Device disconnected, name: \(peripheral.name ?? "<NO_NAME>"), error: \(error?.localizedDescription ?? "No error")"
+            )
+
+        if forcedDisconnect {
+            forcedDisconnect = false
+            return
+        }
+
+        if let pumpManager = self.pumpManager {
+            pumpManager.state.isConnected = false
+            pumpManager.notifyStateDidChange()
+        }
+
+        if let peripheralManager = peripheralManager {
+            peripheralManager.cleanup()
+            self.peripheralManager = nil
+        }
+
+        if let connectCompletion = connectCompletion {
+            connectCompletion(.failedToConnectToDevice)
+            self.connectCompletion = nil
+
+        } else {
+            ensureConnected { error in
+                if let error = error {
+                    self.logger.warning("Failed to auto-reconnect: \(error)")
+                }
+            }
+        }
+    }
+
+    func centralManager(_: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
+        logger
+            .info(
+                "Device connect error, name: \(peripheral.name ?? "<NO_NAME>"), error: \(error?.localizedDescription ?? "No error")"
+            )
+
+        guard let pumpManager = self.pumpManager else {
+            return
+        }
+
+        pumpManager.state.isConnected = false
+        pumpManager.notifyStateDidChange()
+    }
+}
