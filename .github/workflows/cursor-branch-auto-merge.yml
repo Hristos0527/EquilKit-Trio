@@ -1,68 +1,65 @@
 name: Cursor branch auto-merge (D)
 
-# Aggressive path: any push to cursor/** opens a ready PR (if needed) and
+# Aggressive path: push to cursor/** opens a ready PR (if needed) and
 # squash-merges into the default branch without waiting for CI.
-# Draft PRs are skipped. Conflicts are skipped.
+# Draft PRs are skipped. Conflicts / rate limits soft-fail (exit 0).
 # Central hourly net: .github/workflows/auto-merge-cursor-prs.yml
+#
+# Push-only (no pull_request trigger) — avoids duplicate runs + GraphQL spam.
 
 on:
   push:
     branches:
       - "cursor/**"
-  pull_request:
-    types: [opened, ready_for_review, synchronize, reopened]
-    branches: [master, main]
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: cursor-auto-merge-${{ github.repository }}-${{ github.head_ref || github.ref_name }}
+  group: cursor-auto-merge-${{ github.repository }}-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   merge:
-    if: >
-      (github.event_name == 'push' && startsWith(github.ref_name, 'cursor/')) ||
-      (github.event_name == 'pull_request' &&
-       startsWith(github.head_ref, 'cursor/') &&
-       github.event.pull_request.draft == false)
+    if: startsWith(github.ref_name, 'cursor/')
     runs-on: ubuntu-latest
     steps:
       - name: Resolve branch and ensure ready PR
         id: pr
         env:
-          # Prefer PAT so Actions can open PRs (GITHUB_TOKEN is often blocked).
-          GH_TOKEN: ${{ secrets.MIRROR_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          MIRROR_SYNC_TOKEN: ${{ secrets.MIRROR_SYNC_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          DEFAULT="$(gh api "repos/${{ github.repository }}" --jq '.default_branch')"
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BRANCH="${{ github.head_ref }}"
-            NUM="${{ github.event.pull_request.number }}"
-            DRAFT="${{ github.event.pull_request.draft }}"
-            TITLE="${{ github.event.pull_request.title }}"
-          else
-            BRANCH="${{ github.ref_name }}"
-            ROW="$(gh pr list --repo "${{ github.repository }}" --head "$BRANCH" --state open \
-              --json number,isDraft,title --jq '.[0] | "\(.number)\t\(.isDraft)\t\(.title)"' || true)"
-            if [[ -z "$ROW" || "$ROW" == "null"* ]]; then
-              TITLE="chore(auto-merge): ${BRANCH}"
-              if ! gh pr create --repo "${{ github.repository }}" --base "$DEFAULT" --head "$BRANCH" \
-                --title "$TITLE" \
-                --body "Auto-opened by cursor-branch-auto-merge.yml (C+D). Squash-merge without waiting for CI."; then
-                echo "PR create blocked (token permissions). Central hourly auto-merge will retry."
-                echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
-                echo "number=" >> "$GITHUB_OUTPUT"
-                echo "draft=true" >> "$GITHUB_OUTPUT"
-                echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
-                echo "default=${DEFAULT}" >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
-              ROW="$(gh pr list --repo "${{ github.repository }}" --head "$BRANCH" --state open \
-                --json number,isDraft,title --jq '.[0] | "\(.number)\t\(.isDraft)\t\(.title)"')"
+          export GH_TOKEN="${MIRROR_SYNC_TOKEN:-$GITHUB_TOKEN}"
+          REPO="${{ github.repository }}"
+          OWNER="${{ github.repository_owner }}"
+          BRANCH="${{ github.ref_name }}"
+          DEFAULT="$(gh api "repos/${REPO}" --jq '.default_branch')"
+
+          # REST (avoid GraphQL quota used by `gh pr list --json`)
+          ROW="$(gh api "repos/${REPO}/pulls?state=open&head=${OWNER}:${BRANCH}&per_page=1" \
+            --jq '.[0] | if . == null then empty else "\(.number)\t\(.draft)\t\(.title)" end' 2>/dev/null || true)"
+
+          if [[ -z "$ROW" ]]; then
+            TITLE="chore(auto-merge): ${BRANCH}"
+            # REST create PR
+            if ! NUM="$(gh api -X POST "repos/${REPO}/pulls" \
+              -f title="$TITLE" \
+              -f head="$BRANCH" \
+              -f base="$DEFAULT" \
+              -f body="Auto-opened by cursor-branch-auto-merge.yml (C+D). Squash-merge without waiting for CI." \
+              --jq '.number' 2>/dev/null)"; then
+              echo "PR create blocked (token or rate limit). Central hourly auto-merge will retry."
+              echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+              echo "number=" >> "$GITHUB_OUTPUT"
+              echo "draft=true" >> "$GITHUB_OUTPUT"
+              echo "title=${TITLE}" >> "$GITHUB_OUTPUT"
+              exit 0
             fi
+            DRAFT="false"
+          else
             NUM="$(printf '%s' "$ROW" | cut -f1)"
             DRAFT="$(printf '%s' "$ROW" | cut -f2)"
             TITLE="$(printf '%s' "$ROW" | cut -f3-)"
@@ -77,9 +74,12 @@ jobs:
       - name: Squash-merge without CI wait
         if: steps.pr.outputs.draft != 'true' && steps.pr.outputs.number != ''
         env:
-          GH_TOKEN: ${{ secrets.MIRROR_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          MIRROR_SYNC_TOKEN: ${{ secrets.MIRROR_SYNC_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
+          set +e
+          export GH_TOKEN="${MIRROR_SYNC_TOKEN:-$GITHUB_TOKEN}"
+          REPO="${{ github.repository }}"
           NUM="${{ steps.pr.outputs.number }}"
           TITLE="${{ steps.pr.outputs.title }}"
           LOWER="$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]')"
@@ -90,19 +90,29 @@ jobs:
               ;;
           esac
 
-          MERGEABLE="$(gh pr view "$NUM" --repo "${{ github.repository }}" --json mergeable --jq '.mergeable')"
-          if [[ "$MERGEABLE" == "CONFLICTING" ]]; then
-            echo "Skip conflicting PR #$NUM"
+          # REST mergeable flag (true/false/null) — avoid GraphQL `gh pr view`
+          MERGEABLE="$(gh api "repos/${REPO}/pulls/${NUM}" --jq '.mergeable' 2>/dev/null)"
+          if [[ "$MERGEABLE" == "false" ]]; then
+            echo "Skip non-mergeable PR #$NUM (conflict or unknown)"
             exit 0
           fi
 
-          if gh pr merge "$NUM" --repo "${{ github.repository }}" --squash --delete-branch --admin; then
+          if gh api -X PUT "repos/${REPO}/pulls/${NUM}/merge" \
+            -f merge_method=squash \
+            -f commit_title="$TITLE" \
+            -F delete_branch=true >/dev/null 2>&1; then
+            echo "Merged #$NUM via REST"
+            exit 0
+          fi
+
+          # Fallback: gh CLI (may use GraphQL)
+          if gh pr merge "$NUM" --repo "$REPO" --squash --delete-branch --admin 2>/dev/null; then
             echo "Merged #$NUM with --admin"
             exit 0
           fi
-          if gh pr merge "$NUM" --repo "${{ github.repository }}" --squash --delete-branch; then
+          if gh pr merge "$NUM" --repo "$REPO" --squash --delete-branch 2>/dev/null; then
             echo "Merged #$NUM"
             exit 0
           fi
-          echo "Could not merge #$NUM (permissions or other block). Central hourly job may retry."
+          echo "Could not merge #$NUM (permissions, conflict, or rate limit). Central hourly job may retry."
           exit 0
