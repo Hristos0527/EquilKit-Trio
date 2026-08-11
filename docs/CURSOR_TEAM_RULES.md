@@ -20,6 +20,7 @@ Ez a szöveg **minden repóra** vonatkozik, ahol a csapat Cursor agentet haszná
 - `git fetch` + legfrissebb default branch.
 - Keress meglévő `cursor/*` branch-et és nyitott PR-t ugyanarra a témára — **folytasd**, ne írd újra.
 - Repo átszervezésnél **portolj**, ne hagyj funkciót a régi útvonalon.
+- **Auto-merge:** `cursor/*` push után a kód automatikusan bemegy a default branchre (CI nélkül). Draft / konfliktus / WIP cím kimarad. Új chatben elég a **téma** + „folytasd”.
 
 ### Befejezés
 - Agent log a repóban (`docs/agent-log/`).

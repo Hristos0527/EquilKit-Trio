@@ -77,6 +77,30 @@ Olvasd: docs/AGENT_CONTINUITY.md. Folytasd meglévő cursor/* branch-et, ne írd
 
 ---
 
+## Auto-merge `cursor/*` → default branch (C+D)
+
+**Cél:** ne ragadjon bent a munka `cursor/*` ágon — minden listázott team repóban ([`.github/task-board-repos.json`](../.github/task-board-repos.json)).
+
+| Útvonal | Mit csinál |
+|---------|------------|
+| **D — push** | `cursor/**` push → kész PR (ha kell) → **azonnali squash merge** a default branchre (**CI nélkül**) — workflow: `cursor-branch-auto-merge.yml` (sync minden repóra) |
+| **C — mentőháló** | Óránként a monorepóban: `auto-merge-cursor-prs.yml` + `scripts/auto-merge-cursor-prs.sh` — friss (&lt;48h) nem-draft PR-ek és orphan ágak |
+
+**Kihagyja:** draft PR, merge konfliktus, címben `WIP` / `do not merge`, régi (&gt;48h) orphan / stale PR (hygiene riport kezeli), excluded / `*private*` repók.
+
+**Kockázat (D):** félkész push is bemerge-elődhet. Agent fegyelem + téma megnevezése az új chatben továbbra is kell.
+
+```bash
+# Dry-run (minden listázott repo)
+MIRROR_SYNC_TOKEN=... ./scripts/auto-merge-cursor-prs.sh --dry-run
+# Egy repo
+./scripts/auto-merge-cursor-prs.sh --repo glux-app
+# Csak allow_auto_merge bekapcsolás
+./scripts/auto-merge-cursor-prs.sh --enable-auto-merge-only
+```
+
+**Felhasználó új agentnél:** elég a **téma** (vagy branch név) + „folytasd” — nem kell külön merge/PR utasítás; az auto-merge intézi a fő ágra kerülést.
+
 ## Gépi ellenőrzés
 
 ```bash

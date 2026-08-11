@@ -18,6 +18,7 @@
 - Read [`AGENT_CONTINUITY.md`](./AGENT_CONTINUITY.md); run `./scripts/agent-continuity-check.sh`.
 - Search for existing `cursor/*` branches/PRs before re-implementing.
 - Session end: merge + deploy (if live) + agent log (`docs/agent-log/HANDOFF_TEMPLATE.md`).
+- **Auto-merge (C+D):** push to `cursor/*` squash-merges into the default branch without waiting for CI (synced from monorepo). User only needs a **topic** + “continue”.
 
 ## Development style
 
