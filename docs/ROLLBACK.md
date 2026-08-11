@@ -65,6 +65,7 @@ Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 | Cross-copy modal (#953 `24a80879`) | `git revert 24a80879` → Pages redeploy |
 | PD Support types + sync log (#955 `1f872a47`) | `git revert 1f872a47` → Pages + worker redeploy |
 | Gergő hours / author-who / focus persist (`cursor/task-board-gergo-hours-activity-3f34`) | `git revert <merge-sha>` → Pages redeploy; next hourly sync rewrites who |
+| Email→GT / Tasks migrate flags (`EMAIL_TO_TASKS_ENABLED`) | set wrangler var `true` + `wrangler deploy` in `workers/task-board-api` |
 | Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
 
 ---
