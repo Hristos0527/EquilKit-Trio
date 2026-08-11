@@ -1,0 +1,5 @@
+{
+  "name": "linx-presentation-site",
+  "install": "git fetch origin master 2>/dev/null || true; chmod +x scripts/agent-continuity-check.sh 2>/dev/null || true",
+  "start": "echo 'Cloud agent: read AGENTS.md and docs/AGENT_CONTINUITY.md before coding'"
+}

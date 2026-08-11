@@ -1,0 +1,27 @@
+---
+description: One workstream per branch, merge to default branch, deploy live services
+alwaysApply: true
+---
+
+# Workstreams, merge & deploy
+
+## Branch naming
+
+`cursor/<workstream>-<task>-<suffix>` — one unrelated topic per branch/PR.
+
+## Development
+
+- Plan before new features; small commits; do not rebuild apps until features complete.
+- Protect the default branch (`main` or `master`): **port/integrate**, do not overwrite working code.
+- Logs: `docs/agent-log/<workstream>/`
+- Scratch: `artifacts/<workstream>/` (gitignored)
+
+## Merge + deploy loop
+
+1. Push branch → PR → merge to default branch → deploy (if live) → verify → agent log → tell user what is live.
+
+GluX Workers/theme deploy details (when applicable): monorepo `Hristos0527/linx-presentation-site` → `docs/AGENT_OPERATIONS.md`.
+
+## Repo moves / renames
+
+Port **all** behaviour before deleting old paths. Merge or document superseded branches in agent log.

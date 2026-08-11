@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Pre-push: remind about unmerged cursor/* branches before pushing new work.
+# Install: ./scripts/install-git-hooks.sh
+
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+CHECK="$ROOT/scripts/agent-continuity-check.sh"
+
+if [[ ! -x "$CHECK" ]]; then
+  exit 0
+fi
+
+# Non-blocking by default: print report. Strict if .git/hooks/.continuity-strict exists.
+STRICT_FLAG=""
+if [[ -f "$(git rev-parse --git-dir)/hooks/.continuity-strict" ]]; then
+  STRICT_FLAG="--strict"
+fi
+
+if ! "$CHECK" $STRICT_FLAG 2>&1; then
+  echo ""
+  if [[ -n "$STRICT_FLAG" ]]; then
+    echo "pre-push: push blocked (--strict). Fix continuity issues or merge orphan branches."
+    exit 1
+  fi
+  echo "pre-push: continuity issues found (push allowed). See docs/AGENT_CONTINUITY.md"
+fi

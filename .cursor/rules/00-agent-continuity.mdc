@@ -1,0 +1,43 @@
+---
+description: Mandatory agent continuity — merge, handoff, no orphan branches
+alwaysApply: true
+---
+
+# Agent continuity (MANDATORY — every session)
+
+Read first: `docs/AGENT_CONTINUITY.md`, `docs/AGENT_OPERATIONS.md`, `docs/USER_PREFERENCES.md`.
+
+## Session start (before any code change)
+
+1. `git fetch origin master` (or `main`) and confirm you branch from latest default branch.
+2. Read `docs/AGENT_STATUS.md` manual notes + open PRs for your workstream.
+3. Search git history for prior work on the same feature (`git log --oneline --all --grep=…`, `git branch -a --contains …`).
+4. If an older `cursor/*` branch or open PR already implements part of the task, **continue that branch/PR** — do not re-implement on a fresh branch.
+5. Run `./scripts/agent-continuity-check.sh` when resuming work or when the user says "continue / folytasd".
+
+## Session end (before marking task done — NO EXCEPTIONS)
+
+A task is **NOT done** until all of the following are true:
+
+1. **Committed + pushed** on `cursor/<workstream>-<task>-<suffix>`.
+2. **PR opened or updated** targeting `master` (use ManagePullRequest; not draft forever unless blocked).
+3. **Merged to `master`** when the change is approved / CI green / user said proceed — agent merges, user does not click merge.
+4. **Deployed** when the workstream has a live service (`docs/AGENT_OPERATIONS.md`).
+5. **Agent log written**: `docs/agent-log/<workstream>/YYYYMMDDTHHMMSSZ-<slug>.md` using `docs/agent-log/HANDOFF_TEMPLATE.md`.
+6. **Manual note** added to `docs/AGENT_STATUS.md` if the workstream state changed.
+7. **Handoff message to user** (Hungarian): branch, PR link, merge commit, deploy version/URL, rollback pointer.
+
+## Forbidden outcomes
+
+- Leaving working code only on a `cursor/*` branch without merge.
+- Rebuilding a feature from scratch when an unmerged branch/PR already exists.
+- Ending with "open a PR when ready" / "merge when you want" — **you** merge unless user explicitly forbids deploy.
+- Large refactors without backup (`docs/backups/` or `backups/`) and rollback notes (`docs/ROLLBACK.md`).
+
+## Rollback
+
+Every live-impacting change must document how to undo it in the agent log + `docs/ROLLBACK.md` section for that workstream.
+
+## New agent / long context
+
+If context is large or the user starts a new agent: **stop and hand off** using the template; never silently drop unmerged work.
