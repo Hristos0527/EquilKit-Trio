@@ -52,6 +52,18 @@ Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 
 ---
 
+## task-board (GitHub Pages)
+
+**Live:** https://hristos0527.github.io/linx-presentation-site/task-board.html  
+**Board JSON:** `task-board-data.json` (hourly sync to default branch)
+
+| Változtatás | Rollback |
+|-------------|----------|
+| HTML / labels / `task-board-github-display.json` | `git revert <merge-sha>` → push `master` → Pages redeploy |
+| Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
+
+---
+
 ## Agent kötelezettség
 
 Éles változtatás előtt agent log **Before** szekció:
