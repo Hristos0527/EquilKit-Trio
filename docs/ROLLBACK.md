@@ -63,6 +63,7 @@ Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 | Done scroll + load-more 25 (#948 `f7bd28b5`) | `git revert f7bd28b5` → Pages redeploy (restores accordion UX) |
 | PD details modal (#951 `3bfceea1`) | `git revert 3bfceea1` → Pages + `cd workers/task-board-api && npm run deploy` |
 | Cross-copy modal (#953 `24a80879`) | `git revert 24a80879` → Pages redeploy |
+| PD Support types + sync log (#955 `1f872a47`) | `git revert 1f872a47` → Pages + worker redeploy |
 | Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
 
 ---
