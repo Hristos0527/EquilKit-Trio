@@ -77,6 +77,7 @@ Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 | Gergő hours / author-who / focus persist (`cursor/task-board-gergo-hours-activity-3f34`) | `git revert <merge-sha>` → Pages redeploy; next hourly sync rewrites who |
 | Gergő Tegnap Done visibility (`cursor/task-board-gergo-activity-visible-3f34`) | `git revert <merge-sha>` → Pages redeploy |
 | Email→GT / Tasks migrate flags (`EMAIL_TO_TASKS_ENABLED`) | set wrangler var `true` + `wrangler deploy` in `workers/task-board-api` |
+| Phase 2 people/thread/focus-meta (`cursor/task-board-phase2-people-thread-c4c9`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. KV `people:*` / `thread:*` / `focus_meta:*` megmarad (ártalmatlan). |
 | Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
 
 ---
