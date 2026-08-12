@@ -42,6 +42,12 @@ npm run deploy
 
 Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 
+| Deploy (2026-08-12) | Rollback |
+|---------------------|----------|
+| glux-chat personality/routing #975 (`244230d1`) — version `51cee98b` | `git revert 244230d1` → `cd integrations/glux-ai-brain/branches/glux-chat/worker && npx wrangler deploy` |
+| glux-ai-admin SPA + greeting #975 — version `60af416f` | same revert → `cd integrations/glux-ai-brain/branches/glux-ai-admin/worker && npx wrangler deploy` |
+| glux-garancia internal shopify #975 — version `28d44f31` | same revert → `cd integrations/glux-ai-brain/branches/glux-garancia/worker && npm run deploy` |
+
 ---
 
 ## Shopify theme
