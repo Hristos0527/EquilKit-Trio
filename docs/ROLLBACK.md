@@ -70,6 +70,7 @@ Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 | Done scroll + load-more 25 (#948 `f7bd28b5`) | `git revert f7bd28b5` → Pages redeploy (restores accordion UX) |
 | PD details modal (#951 `3bfceea1`) | `git revert 3bfceea1` → Pages + `cd workers/task-board-api && npm run deploy` |
 | PD tz + focus hide + create-open + details HTML (`cursor/task-board-pd-budapest-tz-focus-3f34`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy` |
+| Pending board fixes (PD local close, hide btn, OAuth persist, group collapse) (`cursor/task-board-pending-fixes-3f34`) | Revert merge → Pages workflow + worker redeploy |
 | Ma auto-focus GT + calendar (`cursor/task-board-ma-auto-focus-gt-cal-3f34`, merge `0eed2d85`) | `git revert 0eed2d85` → push `master` → Pages redeploy |
 | Cross-copy modal (#953 `24a80879`) | `git revert 24a80879` → Pages redeploy |
 | PD Support types + sync log (#955 `1f872a47`) | `git revert 1f872a47` → Pages + worker redeploy |
