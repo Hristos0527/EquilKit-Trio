@@ -49,6 +49,19 @@ Rollback: `git revert` + `npx wrangler deploy` az adott worker könyvtárban.
 | glux-ai-admin SPA + greeting #975 — version `60af416f` | same revert → `cd integrations/glux-ai-brain/branches/glux-ai-admin/worker && npx wrangler deploy` |
 | glux-garancia internal shopify #975 — version `28d44f31` | same revert → `cd integrations/glux-ai-brain/branches/glux-garancia/worker && npm run deploy` |
 
+### GluX AI Agent V3 (staging only — 2026-08-13)
+
+Production `glux-chat` is **not** on V3 (`GLUX_AGENT_VERSION` unset).
+
+| Service | Rollback |
+|---------|----------|
+| `glux-chat-agent-v3-test` | Redeploy previous worker version from Cloudflare dashboard, or `git revert` V3 commit → `cd integrations/glux-ai-brain/branches/glux-chat/worker && npx wrangler deploy --config wrangler.agent-v3-test.toml` |
+| `glux-ai-admin` (V3 routing + debug UI) | `git revert` admin commit → `cd integrations/glux-ai-brain/branches/glux-ai-admin/worker && npx wrangler deploy` |
+| `glux-garancia` (internal agent routes) | `git revert` garancia commit → `cd integrations/glux-ai-brain/branches/glux-garancia/worker && npm run deploy` |
+| `glux-pdf-extract` (per-page PDF) | Redeploy previous version → `cd integrations/glux-ai-brain/branches/glux-pdf-extract/worker && npx wrangler deploy` |
+| Admin test → V3 | Unset `GLUX_AGENT_V3_TEST_CHAT_URL` on `glux-ai-admin` (falls back to V2 test URL) |
+| D1 `page_number` migration | `0007_knowledge_page_number.sql` is additive; rollback = ignore column (re-index docs after revert) |
+
 ---
 
 ## Shopify theme
