@@ -62,6 +62,21 @@ Production `glux-chat` is **not** on V3 (`GLUX_AGENT_VERSION` unset).
 | Admin test → V3 | Unset `GLUX_AGENT_V3_TEST_CHAT_URL` on `glux-ai-admin` (falls back to V2 test URL) |
 | D1 `page_number` migration | `0007_knowledge_page_number.sql` is additive; rollback = ignore column (re-index docs after revert) |
 
+### V3 smooth-chat pipeline (2026-08-14)
+
+Pre-release Worker versions:
+
+| Service | Previous version |
+|---------|------------------|
+| `glux-chat` | `0ab53197-0ffc-4f81-a46b-7b03aa89e589` |
+| `glux-chat-agent-v3-test` | `df8c5bba-98c9-4394-ad93-6507ed48f5e8` |
+| `glux-garancia` | `f8b65e8f-8409-4740-9150-216ca5e6f4ba` |
+| `glux-ai-admin` | `b9c104eb-648d-47ed-9e14-f78fca76734f` |
+
+Use `wrangler rollback <version>` in the matching worker directory; for V3 staging add `--config wrangler.agent-v3-test.toml`. The additive `glux-chat-knowledge` Vectorize index may remain after rollback and can be rebuilt from Dashboard knowledge. Do not delete the index during an incident rollback.
+
+Detailed validation and commands: [`agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md`](./agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md).
+
 ---
 
 ## Shopify theme
@@ -85,6 +100,7 @@ Production `glux-chat` is **not** on V3 (`GLUX_AGENT_VERSION` unset).
 | PD tz + focus hide + create-open + details HTML (`cursor/task-board-pd-budapest-tz-focus-3f34`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy` |
 | Pending board fixes (PD local close, hide btn, OAuth persist, group collapse) (`cursor/task-board-pending-fixes-3f34`) | Revert merge → Pages workflow + worker redeploy |
 | Ma auto-focus GT + calendar (`cursor/task-board-ma-auto-focus-gt-cal-3f34`, merge `0eed2d85`) | `git revert 0eed2d85` → push `master` → Pages redeploy |
+| Transfer move = delete source (#1027 `47a9881a`) | `git revert 47a9881a` → Pages + `cd workers/task-board-api && npm run deploy` |
 | Cross-copy modal (#953 `24a80879`) | `git revert 24a80879` → Pages redeploy |
 | PD Support types + sync log (#955 `1f872a47`) | `git revert 1f872a47` → Pages + worker redeploy |
 | Gergő hours / author-who / focus persist (`cursor/task-board-gergo-hours-activity-3f34`) | `git revert <merge-sha>` → Pages redeploy; next hourly sync rewrites who |
