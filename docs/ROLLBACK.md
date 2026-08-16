@@ -77,6 +77,19 @@ Use `wrangler rollback <version>` in the matching worker directory; for V3 stagi
 
 Detailed validation and commands: [`agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md`](./agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md).
 
+### V3 target architecture flag (`GLUX_V3_ARCH_ENABLED`) — staging only (2026-08-15)
+
+Production `glux-chat` stays on V1; **only** `glux-chat-agent-v3-test` may enable the arch path.
+
+| Action | Command / setting |
+|--------|-------------------|
+| **Disable arch (instant)** | In `wrangler.agent-v3-test.toml` set `GLUX_V3_ARCH_ENABLED = "0"` → `cd integrations/glux-ai-brain/branches/glux-chat/worker && npx wrangler deploy --config wrangler.agent-v3-test.toml` |
+| **Redeploy previous Worker** | `cd integrations/glux-ai-brain/branches/glux-chat/worker && npx wrangler rollback <version> --config wrangler.agent-v3-test.toml` |
+| **Git revert** | `git revert` arch merge commit → same deploy command with test config |
+| **Acceptance re-check** | `node scripts/glux-ai/run-glux-acceptance-tests.mjs` (static 44/44 routing) |
+
+Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + StructuredUI → NarrowSafety. Legacy smooth-chat (`GLUX_V3_ARCH_ENABLED=0`) remains the rollback target until production sign-off.
+
 ---
 
 ## Shopify theme
