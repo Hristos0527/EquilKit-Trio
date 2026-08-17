@@ -30,6 +30,7 @@ npm run deploy
 |-------------|----------|
 | Fotó AI modell (OpenAI ↔ Gemma) | `wrangler.toml`: `GARANCIA_VISION_MODEL`, `GARANCIA_TEXT_MODEL` → deploy |
 | Auto-kredit runtime | Admin → Auto-kredit kapcsoló (`CONFIG:auto_mode`) |
+| Auto-kredit delay / idősáv (2026-08-18) | Admin → késleltetés `0` + idősáv `0–24` (azonnali mód), vagy Auto-kredit KI; vagy `git revert <merge-sha>` → `npm run smoke && npm run deploy` |
 | Admin closed-claims preload (2026-08-18) | `git revert 8c33de02` → `cd integrations/glux-ai-brain/branches/glux-garancia/worker && npm run smoke && npm run deploy` |
 
 **Smoke deploy előtt:** `npm run smoke`
