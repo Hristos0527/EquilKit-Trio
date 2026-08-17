@@ -124,7 +124,7 @@ Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + 
 | Email→GT / Tasks migrate flags (`EMAIL_TO_TASKS_ENABLED`) | set wrangler var `true` + `wrangler deploy` in `workers/task-board-api` |
 | Phase 2 people/thread/focus-meta (`cursor/task-board-phase2-people-thread-c4c9`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. KV `people:*` / `thread:*` / `focus_meta:*` megmarad (ártalmatlan). |
 | Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
-| Version footer at board bottom (`cursor/task-board-version-footer-bfcf`) | `git revert <merge-sha>` → push `master` → Pages redeploy |
+| Version footer at board bottom (#1060 `dc9d7c22`) | `git revert dc9d7c22` → push `master` → Pages redeploy |
 
 ---
 
