@@ -76,6 +76,7 @@ Pre-release Worker versions:
 Use `wrangler rollback <version>` in the matching worker directory; for V3 staging add `--config wrangler.agent-v3-test.toml`. The additive `glux-chat-knowledge` Vectorize index may remain after rollback and can be rebuilt from Dashboard knowledge. Do not delete the index during an incident rollback.
 
 | glux-chat semantic index best-effort delete (`84ee212d`) — version from deploy gate `0ad09f5e` | `git revert 84ee212d` → redeploy glux-chat + glux-ai-admin |
+| glux-chat fatigue/credit routing (`528de774`) — `fe6dd21e` / v3-test `36433968` | `git revert 528de774` → redeploy glux-chat + `wrangler.agent-v3-test.toml` |
 
 Detailed validation and commands: [`agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md`](./agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md).
 
