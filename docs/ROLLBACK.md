@@ -127,6 +127,7 @@ Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + 
 | Phase 2 people/thread/focus-meta (`cursor/task-board-phase2-people-thread-c4c9`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. KV `people:*` / `thread:*` / `focus_meta:*` megmarad (ártalmatlan). |
 | Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
 | Version footer at board bottom (#1060 `dc9d7c22`) | `git revert dc9d7c22` → push `master` → Pages redeploy |
+| Focus agenda timeline (#1092 `eaff9f4a`) | `git revert eaff9f4a` → push `master` → Pages + `cd workers/task-board-api && npm run deploy` |
 
 ---
 
