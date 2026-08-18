@@ -140,6 +140,14 @@ Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + 
 
 ---
 
+## repo-maintenance (git refs)
+
+| Változtatás | Rollback |
+|---|---|
+| Remote branch cleanup 2026-08-18 (241 → 85 ref, 157 törölve) | PR oldalon **Restore branch**, vagy `gh api -X POST repos/Hristos0527/linx-presentation-site/git/refs -f ref='refs/heads/<branch>' -f sha='<sha>'`. A 34 megtartott egyedi branch bundle-je: `artifacts/branch-cleanup-20260818/bundles/unique-work-34-branches.bundle` (lokális, gitignored). Részletek: `docs/agent-log/repo-maintenance/20260818T112000Z-remote-branch-cleanup.md` |
+
+---
+
 ## Agent kötelezettség
 
 Éles változtatás előtt agent log **Before** szekció:
