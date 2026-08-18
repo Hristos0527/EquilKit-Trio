@@ -129,6 +129,8 @@ Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + 
 | Version footer at board bottom (#1060 `dc9d7c22`) | `git revert dc9d7c22` → push `master` → Pages redeploy |
 | Focus agenda timeline (#1092 `eaff9f4a`) | `git revert eaff9f4a` → push `master` → Pages + `cd workers/task-board-api && npm run deploy` |
 | Email thumbs + Shopify secrets (#1094 `e012f9ba`) | `git revert e012f9ba` → push `master` → Pages + worker deploy |
+| GitHub board scan one repo (#1097 `c97acf1c`) | `git revert c97acf1c` → push `master` → next `sync-agent-status.yml` scans all `repos[]` again |
+| GitHub PRs only + skip orphan cursor branches | `git revert <follow-up merge>` → push `master` |
 
 ---
 
