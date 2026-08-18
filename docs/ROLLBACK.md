@@ -105,6 +105,16 @@ A V3.2 az arch path tetejére épül, és alapértelmezetten **ki van kapcsolva*
 
 Staging saját Vectorize indexet kapott (`glux-chat-agent-v3-knowledge`), hogy a V3.2 kísérletek ne írjanak a produkciós vektorokba. Az indexet a `scripts/deploy-worker.mjs` hozza létre az első staging deploynál; utána a tudásbázist újra kell publikálni, hogy a szemantikus keresés visszaálljon (addig lexikálisra esik vissza, hibaüzenet nélkül).
 
+### Retrieval observability (F5) — nincs flag mögött (2026-08-18)
+
+Az F5 szándékosan **nem** a `GLUX_V3_2_ENABLED` mögött van: ez a mérőműszer, amivel a V3.1 és a V3.2 összehasonlítható, tehát mindkét úton jelentenie kell. Csak diagnosztikai mezőket ad hozzá — az ágens bemenete, eszközválasztása és válaszszövege változatlan.
+
+| Action | Command / setting |
+|--------|-------------------|
+| **Teljes visszaállás** | `git revert 432f46bd` → `npm run deploy` a `glux-ai-admin` és a `glux-chat` workerben. Nincs séma-, KV- vagy Vectorize-írás, csak redeploy. |
+| **Csak a chat worker visszaállítása** | Biztonságos: a `/admin/v1/retrieval-health` továbbra is működik, `corpus.pressure.state` `unknown` lesz, a turn panelen pedig nem lesz `topScores`. |
+| **Élő ellenőrzés** | `GET /admin/v1/retrieval-health` → `state`, `missingCount`, `indexLagMs`, `corpus.pressure`. |
+
 ### Admin auth — `ALLOW_DEV_AUTH` (2026-08-18)
 
 A korábbi `workers_preview` mód a hosztnév `.workers.dev` végződésére engedett be token nélkül. Mivel a `glux-ai-admin` egyetlen éles hosztneve `glux-ai-admin.gluxshop.workers.dev`, ez minden `/admin/v1/*` végpontot nyilvánosan olvashatóvá és írhatóvá tett. A mód megszűnt.
