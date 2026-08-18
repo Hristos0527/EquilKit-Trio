@@ -111,7 +111,7 @@ A korábbi `workers_preview` mód a hosztnév `.workers.dev` végződésére eng
 
 | Action | Command / setting |
 |--------|-------------------|
-| **Belépés a dashboardra** | Egyszer megnyitni: `https://glux-ai-admin.gluxshop.workers.dev/?admin_key=<KEY>` → HttpOnly cookie-t állít és átirányít. Utána a kulcs nem kell újra. |
+| **Belépés a dashboardra** | Egyszer megnyitni: `https://glux-ai-admin.gluxshop.workers.dev/admin/login?key=<KEY>` → HttpOnly cookie-t állít és átirányít a `/`-re. Utána a kulcs nem kell újra. |
 | **Kulcs cseréje / kompromittálódás** | `wrangler secret put ADMIN_DEV_AUTH_KEY` új értékkel → deploy. A régi cookie-k azonnal érvénytelenek. |
 | **Teljes zárás (cél állapot)** | `ALLOW_DEV_AUTH = "0"` → deploy. **Csak akkor**, ha az App Bridge be van kötve, különben a dashboard elérhetetlen (a `window.shopify` ma nem létezik, így a SPA nem küld JWT-t). |
 | **Vészhelyzeti visszaállás** | `git revert <merge-sha>` → deploy. Ez visszahozza a nyilvános hozzáférést, ezért csak végszükség esetén. |
