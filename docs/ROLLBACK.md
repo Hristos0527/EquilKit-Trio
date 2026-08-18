@@ -128,6 +128,7 @@ Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + 
 | Sync script human-who / title_hu | same revert; next hourly sync rewrites JSON |
 | Version footer at board bottom (#1060 `dc9d7c22`) | `git revert dc9d7c22` → push `master` → Pages redeploy |
 | Focus agenda timeline (#1092 `eaff9f4a`) | `git revert eaff9f4a` → push `master` → Pages + `cd workers/task-board-api && npm run deploy` |
+| Email thumbs + Shopify secrets (#1094 `e012f9ba`) | `git revert e012f9ba` → push `master` → Pages + worker deploy |
 
 ---
 
