@@ -115,6 +115,17 @@ Az F5 szándékosan **nem** a `GLUX_V3_2_ENABLED` mögött van: ez a mérőműsz
 | **Csak a chat worker visszaállítása** | Biztonságos: a `/admin/v1/retrieval-health` továbbra is működik, `corpus.pressure.state` `unknown` lesz, a turn panelen pedig nem lesz `topScores`. |
 | **Élő ellenőrzés** | `GET /admin/v1/retrieval-health` → `state`, `missingCount`, `indexLagMs`, `corpus.pressure`. |
 
+### GYIK retrieval recall (F3 / PR-2a) — kapuzott (2026-08-18)
+
+A GYIK chunkok mostantól `documentId`-t is hordoznak, de ezt **csak a V3.2 út használja fel**. Flag nélkül a `documentKey` pontosan a korábbi kulcsot állítja elő, tehát az újrapublikálás önmagában nem mozdítja a produkciós találatokat.
+
+| Action | Command / setting |
+|--------|-------------------|
+| **Gyors mitigáció (ha a V3.2 be van kapcsolva és romlik a recall)** | `GLUX_V3_2_ENABLED = "0"` → `glux-chat` deploy. Újrapublikálás **nem** kell: a mező flag nélkül inaktív. |
+| **Teljes visszaállás** | `git revert 84db004a` → `npm run deploy` a `glux-ai-admin` és a `glux-chat` workerben. |
+| **Séma** | `0019_faqs_priority.sql` csak hozzáad egy oszlopot alapértelmezett értékkel, a régi worker is elfut az új sémán. Down-migráció nincs és nem is kell. |
+| **Élő ellenőrzés** | `GET /admin/v1/retrieval-health` → `state: ready`, `missingCount: 0`. Újrapublikálás után az index ~60 s alatt épül újra. |
+
 ### Admin auth — `ALLOW_DEV_AUTH` (2026-08-18)
 
 A korábbi `workers_preview` mód a hosztnév `.workers.dev` végződésére engedett be token nélkül. Mivel a `glux-ai-admin` egyetlen éles hosztneve `glux-ai-admin.gluxshop.workers.dev`, ez minden `/admin/v1/*` végpontot nyilvánosan olvashatóvá és írhatóvá tett. A mód megszűnt.
