@@ -82,18 +82,28 @@ Use `wrangler rollback <version>` in the matching worker directory; for V3 stagi
 
 Detailed validation and commands: [`agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md`](./agent-log/glux-ai/20260814T103701Z-smooth-chat-v3.md).
 
-### V3 target architecture flag (`GLUX_V3_ARCH_ENABLED`) — staging only (2026-08-15)
+### V3 target architecture flag (`GLUX_V3_ARCH_ENABLED`) — **production is on** (updated 2026-08-18)
 
-Production `glux-chat` stays on V1; **only** `glux-chat-agent-v3-test` may enable the arch path.
+Korábban ez a szakasz „staging only"-t írt. **Ez elavult:** `wrangler.toml` (production `glux-chat`) is `GLUX_V3_ARCH_ENABLED = "1"` értéken áll, tehát az arch path éles forgalmat szolgál ki. A rollback célpont a legacy V3 runner, nem a V1 smooth-chat.
 
 | Action | Command / setting |
 |--------|-------------------|
-| **Disable arch (instant)** | In `wrangler.agent-v3-test.toml` set `GLUX_V3_ARCH_ENABLED = "0"` → `cd integrations/glux-ai-brain/branches/glux-chat/worker && npx wrangler deploy --config wrangler.agent-v3-test.toml` |
-| **Redeploy previous Worker** | `cd integrations/glux-ai-brain/branches/glux-chat/worker && npx wrangler rollback <version> --config wrangler.agent-v3-test.toml` |
-| **Git revert** | `git revert` arch merge commit → same deploy command with test config |
+| **Disable arch on staging** | `wrangler.agent-v3-test.toml` → `GLUX_V3_ARCH_ENABLED = "0"` → `cd integrations/glux-ai-brain/branches/glux-chat/worker && npm run deploy:agent-v3-test` |
+| **Disable arch on production** | `wrangler.toml` → `GLUX_V3_ARCH_ENABLED = "0"` → `npm run deploy` (a `GLUX_AGENT_VERSION = "v3"` marad; ez a legacy V3 runnert választja) |
+| **Redeploy previous Worker** | `npx wrangler rollback <version> [--config wrangler.agent-v3-test.toml]` |
 | **Acceptance re-check** | `node scripts/glux-ai/run-glux-acceptance-tests.mjs` (static 44/44 routing) |
 
-Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + StructuredUI → NarrowSafety. Legacy smooth-chat (`GLUX_V3_ARCH_ENABLED=0`) remains the rollback target until production sign-off.
+### V3.2 pipeline flag (`GLUX_V3_2_ENABLED`) — opt-in (2026-08-18)
+
+A V3.2 az arch path tetejére épül, és alapértelmezetten **ki van kapcsolva**. Terv: [`glux-ai/V3_2_PLAN.md`](./glux-ai/V3_2_PLAN.md).
+
+| Action | Command / setting |
+|--------|-------------------|
+| **Disable V3.2 (teljes visszaállás V3.1-re)** | `GLUX_V3_2_ENABLED = "0"` vagy a változó törlése → deploy. Nincs adatmigráció, nincs egyéb teendő. |
+| **Egy tenant kivétele** | tenant config `features.v32 = false` → publish. A globális kapcsoló a külső kapu: ha az „0", a tenant beállítás nem tudja bekapcsolni. |
+| **Verzió ellenőrzése** | A válasz `build.agentVersion` mezője `v3.1` vagy `v3.2`; a trace `orchestratorTrace.pipelineVersion` ugyanezt mutatja. |
+
+Staging saját Vectorize indexet kapott (`glux-chat-agent-v3-knowledge`), hogy a V3.2 kísérletek ne írjanak a produkciós vektorokba. Az indexet a `scripts/deploy-worker.mjs` hozza létre az első staging deploynál; utána a tudásbázist újra kell publikálni, hogy a szemantikus keresés visszaálljon (addig lexikálisra esik vissza, hibaüzenet nélkül).
 
 ---
 
