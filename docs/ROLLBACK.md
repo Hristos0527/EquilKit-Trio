@@ -105,6 +105,19 @@ A V3.2 az arch path tetejére épül, és alapértelmezetten **ki van kapcsolva*
 
 Staging saját Vectorize indexet kapott (`glux-chat-agent-v3-knowledge`), hogy a V3.2 kísérletek ne írjanak a produkciós vektorokba. Az indexet a `scripts/deploy-worker.mjs` hozza létre az első staging deploynál; utána a tudásbázist újra kell publikálni, hogy a szemantikus keresés visszaálljon (addig lexikálisra esik vissza, hibaüzenet nélkül).
 
+### Admin auth — `ALLOW_DEV_AUTH` (2026-08-18)
+
+A korábbi `workers_preview` mód a hosztnév `.workers.dev` végződésére engedett be token nélkül. Mivel a `glux-ai-admin` egyetlen éles hosztneve `glux-ai-admin.gluxshop.workers.dev`, ez minden `/admin/v1/*` végpontot nyilvánosan olvashatóvá és írhatóvá tett. A mód megszűnt.
+
+| Action | Command / setting |
+|--------|-------------------|
+| **Belépés a dashboardra** | Egyszer megnyitni: `https://glux-ai-admin.gluxshop.workers.dev/?admin_key=<KEY>` → HttpOnly cookie-t állít és átirányít. Utána a kulcs nem kell újra. |
+| **Kulcs cseréje / kompromittálódás** | `wrangler secret put ADMIN_DEV_AUTH_KEY` új értékkel → deploy. A régi cookie-k azonnal érvénytelenek. |
+| **Teljes zárás (cél állapot)** | `ALLOW_DEV_AUTH = "0"` → deploy. **Csak akkor**, ha az App Bridge be van kötve, különben a dashboard elérhetetlen (a `window.shopify` ma nem létezik, így a SPA nem küld JWT-t). |
+| **Vészhelyzeti visszaállás** | `git revert <merge-sha>` → deploy. Ez visszahozza a nyilvános hozzáférést, ezért csak végszükség esetén. |
+
+A kulcs helye lokálisan: `artifacts/admin-auth/ADMIN_DEV_AUTH_KEY.txt` (gitignored). A secret soha nem kerül a `wrangler.toml`-ba — a smoke check ezt ellenőrzi.
+
 ---
 
 ## Shopify theme
