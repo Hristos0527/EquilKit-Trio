@@ -123,6 +123,8 @@ Arch on disables GPT factual repair and uses CoarseRouter + tool-group filter + 
 | PD Support types + sync log (#955 `1f872a47`) | `git revert 1f872a47` → Pages + worker redeploy |
 | Gergő hours / author-who / focus persist (`cursor/task-board-gergo-hours-activity-3f34`) | `git revert <merge-sha>` → Pages redeploy; next hourly sync rewrites who |
 | Gergő Tegnap Done visibility (`cursor/task-board-gergo-activity-visible-3f34`) | `git revert <merge-sha>` → Pages redeploy |
+| Gergő GitHub auto-merge who (#1109 `46c0bdc6`) | `git revert 46c0bdc6` → push `master` → re-run `sync-agent-status.yml` |
+| Agenda now-line / 00–24 / Átütemezés + Terület 7 kategória (`cursor/task-board-agenda-now-reschedule`) | `git revert <merge-sha>` → push `master` → Pages redeploy |
 | Email→GT / Tasks migrate flags (`EMAIL_TO_TASKS_ENABLED`) | set wrangler var `true` + `wrangler deploy` in `workers/task-board-api` |
 | Focus height + GT Kanban off + email images (`cursor/task-board-focus-email-fix-bfcf`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. Local: clear `glux-task-board-settings-*` / purge flag `glux-task-board-purge-gt-manual-v1-*` if needed. |
 | Phase 2 people/thread/focus-meta (`cursor/task-board-phase2-people-thread-c4c9`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. KV `people:*` / `thread:*` / `focus_meta:*` megmarad (ártalmatlan). |
