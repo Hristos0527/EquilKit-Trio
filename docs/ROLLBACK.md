@@ -170,6 +170,7 @@ A kulcs helye lokálisan: `artifacts/admin-auth/ADMIN_DEV_AUTH_KEY.txt` (gitigno
 | Gergő GitHub auto-merge who (#1109 `46c0bdc6`) | `git revert 46c0bdc6` → push `master` → re-run `sync-agent-status.yml` |
 | Agenda now-line / 00–24 / Átütemezés + Terület 7 kategória (`cursor/task-board-agenda-now-reschedule`) | `git revert <merge-sha>` → push `master` → Pages redeploy |
 | Agenda scroll today+tomorrow + wrapped titles (`cursor/task-board-agenda-scroll-nextday`) | `git revert <merge-sha>` → push `master` → Pages redeploy |
+| Agenda click/resize/drag-off after shrink (`cursor/task-board-agenda-block-interact`) | `git revert <merge-sha>` → push `master` → Pages redeploy |
 | Email→GT / Tasks migrate flags (`EMAIL_TO_TASKS_ENABLED`) | set wrangler var `true` + `wrangler deploy` in `workers/task-board-api` |
 | Focus height + GT Kanban off + email images (`cursor/task-board-focus-email-fix-bfcf`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. Local: clear `glux-task-board-settings-*` / purge flag `glux-task-board-purge-gt-manual-v1-*` if needed. |
 | Phase 2 people/thread/focus-meta (`cursor/task-board-phase2-people-thread-c4c9`) | `git revert <merge-sha>` → Pages + `cd workers/task-board-api && npm run deploy`. KV `people:*` / `thread:*` / `focus_meta:*` megmarad (ártalmatlan). |
